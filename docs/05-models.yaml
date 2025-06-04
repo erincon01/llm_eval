@@ -1,0 +1,76 @@
+models_configs:
+  - id: msdn-corp
+    enabled: true
+    endpoint: https://erincon01-ai-foundry.services.ai.azure.com
+    api_key: 6HMOJzAqWAxSvS6SVz1RXi7UYfoMGsbvjrj3vFzbD7MbRYkbbBRhJQQJ99BEACYeBjFXJ3w3AAAAACOGwkM2
+    models:
+      - name: DeepSeek-V3-0324
+        cost_input_tokens_EUR_1K:  0.00114
+        cost_output_tokens_EUR_1K: 0.00456
+      - name: gpt-4o
+        cost_input_tokens_EUR_1K:  0.00250
+        cost_output_tokens_EUR_1K: 0.01000
+      - name: gpt-4o-mini
+        cost_input_tokens_EUR_1K:  0.00015
+        cost_output_tokens_EUR_1K: 0.00060
+      - name: grok-3
+        cost_input_tokens_EUR_1K:  0.00300
+        cost_output_tokens_EUR_1K: 0.01500
+      - name: grok-3-mini
+        cost_input_tokens_EUR_1K:  0.00025
+        cost_output_tokens_EUR_1K: 0.00127
+  - id: msdn-alternative
+    enabled: false
+    endpoint: https://eladi-mb2qaohs-eastus2.cognitiveservices.azure.com
+    api_key: 9Z2AMZzNnVH5eYHG2d9Ik0cJu1hMbjWZfzqrHyLjyXMLFVZ8rE4oJQQJ99BEACHYHv6XJ3w3AAAAACOGgYYj
+    models:
+      - name: Phi-3-medium-128k-instruct
+        enabled: false
+        cost_input_tokens_EUR_1K:  0.00015
+        cost_output_tokens_EUR_1K: 0.00060
+      - name: Phi-3.5-MoE-instruct
+        enabled: false
+        cost_input_tokens_EUR_1K:  0.00015
+        cost_output_tokens_EUR_1K: 0.00057
+      - name: gpt-4.1
+        cost_input_tokens_EUR_1K:  0.00200
+        cost_output_tokens_EUR_1K: 0.00800
+      - name: gpt-4.1-mini
+        cost_input_tokens_EUR_1K:  0.00040
+        cost_output_tokens_EUR_1K: 0.00160
+
+  - id: azure-erincon
+    enabled: false
+    endpoint: https://erincon01-ps.services.ai.azure.com
+    api_key: 3QFbXCqI2pcJId9iGbYRGbLs6g7Qieun6nN7aZTptbjUWvckaM8FJQQJ99BEACYeBjFXJ3w3AAAAACOGzDs2
+    models:
+      - name: Llama-3.3-70B-Instruct
+        cost_input_tokens_EUR_1K:  0.00600
+        cost_output_tokens_EUR_1K: 0.00200
+      - name: Llama-4-Maverick-17B-128E-Instruct-FP8
+        cost_input_tokens_EUR_1K:  0.00013
+        cost_output_tokens_EUR_1K: 0.00050
+      - name: Llama-4-Scout-17B-16E-Instruct
+        cost_input_tokens_EUR_1K:  0.00020
+        cost_output_tokens_EUR_1K: 0.00078
+      - name: Mistral-Large-2411
+        cost_input_tokens_EUR_1K:  0.00071
+        cost_output_tokens_EUR_1K: 0.00071
+
+  - id: antrophic-erincon
+    enabled: false
+    endpoint: https://antrophic.com
+    api_key: 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
+    models:
+      - name: claude-3-5-sonnet-20241022
+        cost_input_tokens_EUR_1K:  0.00300
+        cost_output_tokens_EUR_1K: 0.01500
+      - name: claude-3-5-haiku-20241022
+        cost_input_tokens_EUR_1K:  0.00080
+        cost_output_tokens_EUR_1K: 0.00400
+      - name: claude-3-7-sonnet-20250219
+        cost_input_tokens_EUR_1K:  0.00300
+        cost_output_tokens_EUR_1K: 0.01500
+      - name: claude-sonnet-4-20250514
+        cost_input_tokens_EUR_1K:  0.00300
+        cost_output_tokens_EUR_1K: 0.01500

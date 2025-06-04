@@ -1,0 +1,35 @@
+# Usa una imagen base de Python
+FROM python:3.9-slim
+
+# Establece el directorio de trabajo en el contenedor
+WORKDIR /app
+
+# Instala el controlador ODBC y herramientas relacionadas
+RUN apt-get update && apt-get install -y bash gnupg2 curl \
+&& curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+&& curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+&& apt-get update \
+&& ACCEPT_EULA=Y apt-get install -y msodbcsql18 mssql-tools18 unixodbc-dev \
+&& rm -rf /var/lib/apt/lists/*
+
+# Añade las herramientas SQL Server al PATH
+ENV PATH="$PATH:/opt/mssql-tools18/bin:/usr/local/bin"
+
+# install git
+RUN apt-get update && apt-get install -y git
+
+COPY ./*.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# NOT NEEDED IN DEV CONTAINERS --> REVIEW THE devcontainer.json FILE
+# COPY ./python_modules/* /app/python_modules/
+# COPY ./images /app/images/
+# COPY ./docs/* /app/docs/
+# COPY ./*.json /app/
+# COPY ./*.mp4 /app/
+# COPY ./*.py /app/
+# COPY ./.streamlit /app/.streamlit/
+
+# RUN cat /app/requirements.txt
+
+EXPOSE 80

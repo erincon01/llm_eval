@@ -17,7 +17,6 @@ import anthropic
 import vertexai
 from vertexai.generative_models import GenerativeModel
 
-
 import time
 import traceback
 
@@ -29,7 +28,8 @@ def get_chat_completion_from_platform(platform, model, system_message, user_prom
     """
     Retrieves a chat completion from Azure OpenAI API.
     Args:
-        platform (str): The platform to use for generating chat completions. Either "azure_openai" or "deepseek".
+        platform (str): The platform to use for generating chat completions. Either "azure_openai" or "deepseek". deepseek is deprecated.
+        If the model starts with "claude-", it will use the Anthropic API.
         model (str): The model to use for generating chat completions.
         system_message (str): The system message.
         user_prompt (str): The user prompt.

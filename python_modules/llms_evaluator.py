@@ -15,7 +15,7 @@ from langfuse.decorators import langfuse_context, observe
 from questions import Questions
 from database_schema_tables import Database_schema_tables
 from module_data import get_dynamic_sql
-from module_azure_openai import get_chat_completion_from_platform
+from module_llm import get_chat_completion_from_platform
 from module_utils import remove_quotations, normalize_numeric_columns, align_columns_by_first_row
 
 import pandas as pd

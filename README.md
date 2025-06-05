@@ -1,12 +1,38 @@
 # llm_eval
 
-# Project Overview
+## Project Overview
 
 This project is designed to evaluate the performance of various Large Language Models (LLMs) in generating SQL queries based on predefined questions and database schemas. It provides tools for orchestrating evaluations, comparing results, and generating performance reports.
 
+## What is implemented
+
+- evaluation of expert SQL queries against LLM-generated SQL queries.
+- comparison of LLM-generated SQL queries against baseline datasets.
+- logging of evaluation results in Langfuse.
+- reporting of evaluations into the `docs/results` folder for later analysis.
+
+## Roadmap
+
+- general classes review and refactor.
+- general devops practices:
+  - add pre-commit hooks.
+  - add type checking with mypy.
+  - add unit tests.
+  - add integration tests.
+  - add code coverage report.
+- proper keys handing in the models.yaml configuration file.
+- add support to Gemini models.
+- add support to on-prem models (Ollama).
+- bettter datasets comparison (function `compare_baseline_resultset_with_LLM_resultset` in `llm_evaluator` class). Current limitations:
+  - comparison is sensible to ordered rows.
+  - comparison is sensible to columns in different orders.
+  - comparison is sensible when the data row value is not exactly the same (for example: 9.0122 vs 9.0123 are different but 0 equality weight is given).
+- facade app based on streamlit or similar with useful charts.
+- support for more SQL Engines (PostgreSQL, Microsoft Fabric, Databricks, Snowflake, MySQL, etc.).
+
 ## The process
 
-- Given a set of questions (`01-questions.yaml`), 
+- Given a set of questions (`01-questions.yaml`),
 - Given a database schema (`02-database_schema.yaml`),
 - Given a list of semantic rules (`03-semantic-rules.md`), that are used to build a system_message for the LLM.
 
@@ -20,35 +46,14 @@ Run iterative calls to a list of LLMs (`05-models.yaml`).
 
 The project relies on the following Python packages:
 
-- see `requirements.txt` for the complete list.
+- see `requirements.txt`.
 
-## Modules and Functionalities
-
-### `llms_evaluator`
-This module contains the `LLMsEvaluator` class, which is central to the evaluation process. It:
-- Loads questions from YAML files.
-- Parses database schemas.
-- Applies semantic rules.
-- Interacts with LLMs to generate SQL queries.
-- Compares generated queries with baseline datasets.
-
-### `module_utils`
-Provides utility functions for:
-- Consolidating files by iteration or model.
-- Normalizing numeric columns.
-- Aligning columns by the first row.
-- Generating performance reports.
-
-### Other Modules
-- `module_data`: Handles dynamic SQL generation.
-- `module_azure_openai`: Facilitates interaction with Azure OpenAI services.
-
-## Key Classes and Methods
-
+## Modules, classes and Functionalities
 
 ### `Questions` Class
 
 The `Questions` class is responsible for loading and managing questions from a YAML file. It provides methods to:
+
 - Load questions from a specified YAML file.
 - Retrieve questions by their IDs.
 - Get all questions as a list.
@@ -123,7 +128,9 @@ Properties are self-descriptive: for example, `llm_sql_query` indicates the SQL 
 ```
 
 ### `Database_schema_tables` Class
+
 The `Database_schema_tables` class is responsible for parsing and managing the list tables from the database. It provides methods to:
+
 - Load the schema from a YAML file.
 - Retrieve tables and their columns.
 - Get the schema as a dictionary for easy access.
@@ -131,7 +138,6 @@ The `Database_schema_tables` class is responsible for parsing and managing the l
 Sample YAML structure for the database schema:
 
 ```yaml
-
 
 tables:
   - name: "region"
@@ -155,18 +161,48 @@ tables:
 
 ```
 
-
 ### `LLMsEvaluator`
-The `LLMsEvaluator` class is initialized with paths to configuration files, including:
-- Questions (`01-questions.yaml`)
-- Database schema (`02-database_schema.yaml`)
-- Semantic rules (`03-semantic-rules.md`)
-- System messages (`04-system_message.md`)
-- Models (`05-models.yaml`)
 
-Key methods:
-- `load_baseline_datasets`: Loads baseline datasets for comparison.
-- `execute_queries`: Executes SQL queries to establish a baseline.
+This module contains the `LLMsEvaluator` class, which is central to the evaluation process. It:
+
+The `LLMsEvaluator` class is initialized with paths to configuration files, including:
+
+- Loading questions (`01-questions.yaml`). See the `Questions` class for details.
+- Loading database schema (`02-database_schema.yaml`). See the `Database_schema_tables` class for details.
+- Loading semantic rules (`03-semantic-rules.md`). Semantic rules are a set of guidelines that define how to map natural language terms to SQL constructs, ensuring consistency and accuracy in query generation.
+- Loading system messages (`04-system_message.md`). This is the system message that will be used to prompt the LLM. It has instructions for the LLM on how to build the SQL query.
+- Loading models (`05-models.yaml`). This file contains the configuration for the different LLM models that can be used in the evaluation process. The models follow this structure:
+
+```yaml
+models_configs:
+  - id: <configuration_group>
+    enabled: true|false
+    endpoint: <endpoint_url>
+    api_key: <api_key>
+    models:
+      - name: <model_name>
+        enabled: true|false
+        cost_input_tokens_EUR_1K:  <decimal_value>
+        cost_output_tokens_EUR_1K: <decimal_value>
+```
+
+- enabled: optional value, indicates if the model or configuration group is enabled for evaluation.
+- other properties are self-descriptive.
+- currently, the project supports EUR only.
+
+#### Methods Overview
+
+- `__init__`: Initializes the class with configuration file paths and loads necessary data.
+- `__load_file`: Reads the content of a file as a string.
+- `__load_questions`: Loads questions from a YAML file.
+- `__load_models_from_yaml`: Loads and validates model configurations from a YAML file.
+- `__get_sql_query_from_LLM`: Generates SQL queries using an LLM based on a user prompt and context.
+- `__remove_baseline_datasets`: Removes baseline datasets and summary files from a specified directory.
+- `compare_baseline_resultset_with_LLM_resultset`: Compares LLM-generated results with baseline datasets.
+- `process_questions_with_model`: Processes questions using a specific model and logs the results.
+- `evaluate_models`: Iterates through all models and evaluates their performance on the loaded questions.
+- `execute_queries`: Executes SQL queries from the questions file and exports results to CSV files.
+- `load_baseline_datasets`: Loads baseline datasets from a specified directory for comparison.
 
 ### `module_llm` module
 
@@ -176,23 +212,24 @@ The funtion implements call to Anthropic, OpenAI, and Deepseek.
 
 The function is decorate with the @observe parameter from Langfuse, which allows tracking the performance of the LLM calls. This is useful for logging and analyzing the performance of different LLMs during evaluations.
 
+### `module_utils`
+
+Provides utility functions for:
+
+- Consolidating files by iteration or model.
+- Normalizing numeric columns.
+- Aligning columns by the first row.
+- Generating performance reports.
 
 ### `module_data` module
 
-### `module_utils` module
-
-
-### `main_evaluation.py`
-
-The `main_evaluation.py` script orchestrates the evaluation process. It:
-1. Initializes the `LLMsEvaluator` class with configuration files.
-2. Loads baseline datasets.
-3. Iterates through LLMs to generate SQL queries.
-4. Compares results and generates performance reports.
+The `module_data` module contains useful functions to interact with SQL Server.
+it is reused from other projects; in this project the funtion used is `get_dynamic_sql` that executes the SQL query against the database and returns the result set.
 
 ## Contribution Guidelines
 
 Developers interested in contributing can follow these steps:
+
 1. Clone the repository.
 2. Install dependencies using `pip install -r requirements.txt`.
 3. Explore the `main_evaluation.py` script and `llms_evaluator` module.
@@ -200,4 +237,3 @@ Developers interested in contributing can follow these steps:
 5. Submit pull requests with detailed descriptions of changes.
 
 For any questions, refer to the documentation in the `docs/` directory.
-

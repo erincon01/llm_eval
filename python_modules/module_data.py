@@ -1,13 +1,11 @@
 import os
-import urllib
 import traceback
-import pandas as pd
+import urllib
 
+import pandas as pd
+from langfuse.decorators import observe
 from sqlalchemy import create_engine, text
 
-from langfuse.decorators import langfuse_context, observe
-from langfuse.openai import AzureOpenAI
-from langfuse import Langfuse
 
 def decode_source(source):
 
@@ -21,21 +19,21 @@ def decode_source(source):
 def get_connection(source):
 
     source = decode_source(source)
-    
+
     engine = None
 
     if source == "azure-sql":
-        server = os.getenv('DB_SERVER_AZURE')
-        database = os.getenv('DB_NAME_AZURE')
-        username = os.getenv('DB_USER_AZURE')
-        password = os.getenv('DB_PASSWORD_AZURE')
+        server = os.getenv("DB_SERVER_AZURE")
+        database = os.getenv("DB_NAME_AZURE")
+        username = os.getenv("DB_USER_AZURE")
+        password = os.getenv("DB_PASSWORD_AZURE")
         password = urllib.parse.quote_plus(password)
-        
+
     elif source == "onprem-sql":
-        server = os.getenv('DB_SERVER_ONPREM')
-        database = os.getenv('DB_NAME_ONPREM')
-        username = os.getenv('DB_USER_ONPREM')
-        password = os.getenv('DB_PASSWORD_ONPREM')
+        server = os.getenv("DB_SERVER_ONPREM")
+        database = os.getenv("DB_NAME_ONPREM")
+        username = os.getenv("DB_USER_ONPREM")
+        password = os.getenv("DB_PASSWORD_ONPREM")
         password = urllib.parse.quote_plus(password)
 
     # Usando pyodbc para generar la cadena de conexión adecuada
@@ -47,12 +45,12 @@ def get_connection(source):
 
     # tries to conect to the server to warm up [for sql azure serverless]
     try:
-        df = pd.read_sql("SELECT @@servername", engine)
-    except Exception as e:
+        _ = pd.read_sql("SELECT @@servername", engine)
+    except Exception:
         try:
-            df = pd.read_sql("SELECT @@servername", engine)
+            _ = pd.read_sql("SELECT @@servername", engine)
         except Exception as e:
-            raise RuntimeError(f"Error connecting to the Azure SQL database.") from e
+            raise RuntimeError("Error connecting to the Azure SQL database.") from e
 
     return engine
 
@@ -74,21 +72,21 @@ def get_database_schema(source, as_data_frame=False):
 
         if source == "azure-sql" or source == "onprem-sql":
 
-            query = f"""
-                SELECT 
+            query = """
+                SELECT
                     t.TABLE_NAME AS table_name,
                     STRING_AGG('| ' + c.COLUMN_NAME + ' ' + c.DATA_TYPE + ' |', ', ') AS columns_with_types
-                FROM 
+                FROM
                     INFORMATION_SCHEMA.TABLES t
-                JOIN 
+                JOIN
                     INFORMATION_SCHEMA.COLUMNS c
-                ON 
+                ON
                     t.TABLE_NAME = c.TABLE_NAME
-                -- WHERE 
+                -- WHERE
                 --    t.TABLE_TYPE = 'BASE TABLE'  -- Opcional: Filtrar solo tablas, no vistas
-                GROUP BY 
+                GROUP BY
                     t.TABLE_NAME
-                ORDER BY 
+                ORDER BY
                     t.TABLE_NAME;
             """
 
@@ -107,8 +105,11 @@ def get_database_schema(source, as_data_frame=False):
         method_name = frame.name
         line_number = frame.lineno
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}].[line-{line_number}] Error connecting or executing the query in the database.") from e
-
+        msg = (
+            f"[{file_name}].[{method_name}].[line-{line_number}] "
+            "Error connecting or executing the query in the database."
+        )
+        raise RuntimeError(msg) from e
 
 
 def execute_stored_procedure(source, procedure_sql, as_data_frame=False):
@@ -134,13 +135,11 @@ def execute_stored_procedure(source, procedure_sql, as_data_frame=False):
             rows = result.fetchall()
             columns = result.keys()
 
-
         # Return results as DataFrame or formatted string
         if as_data_frame:
             return pd.DataFrame(rows, columns=columns)
         else:
             return pd.DataFrame(rows, columns=columns).to_string(index=False)
-
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -148,8 +147,10 @@ def execute_stored_procedure(source, procedure_sql, as_data_frame=False):
         method_name = frame.name
         line_number = frame.lineno
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}].[line-{line_number}] Error executing stored procedure. {e}") from e
-    
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}].[line-{line_number}] Error executing stored procedure. {e}"
+        ) from e
+
 
 @observe
 def get_dynamic_sql(source, sql_query, as_data_frame=False):
@@ -182,10 +183,13 @@ def get_dynamic_sql(source, sql_query, as_data_frame=False):
         method_name = frame.name
         line_number = frame.lineno
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}].[line-{line_number}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}].[line-{line_number}] "
+            "Error connecting or executing the query in the database."
+        ) from e
 
 
-def get_table_data(source, table_name, top_rows = "", as_data_frame=False):
+def get_table_data(source, table_name, top_rows="", as_data_frame=False):
     """
     Retrieves tables data from the database.
     Args:
@@ -199,8 +203,8 @@ def get_table_data(source, table_name, top_rows = "", as_data_frame=False):
     try:
 
         conn = get_connection(source)
-        
-        query=""
+
+        query = ""
         if source == "azure-sql" or source == "onprem-sql":
             query = f"""
                 SELECT {top_rows} *
@@ -209,7 +213,7 @@ def get_table_data(source, table_name, top_rows = "", as_data_frame=False):
 
         df = pd.read_sql(query, conn)
 
-        query=""
+        query = ""
         if source == "azure-sql" or source == "onprem-sql":
             query = f"""
                 select sc.name name from sys.columns sc
@@ -232,7 +236,9 @@ def get_table_data(source, table_name, top_rows = "", as_data_frame=False):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_orders(source, year):
@@ -242,11 +248,11 @@ def get_orders(source, year):
         conn = get_connection(source)
 
         query = f"""
-            SELECT 
-                DATEPART(week, o_orderdate) AS week_number,            
+            SELECT
+                DATEPART(week, o_orderdate) AS week_number,
                 COUNT(*) AS order_count,
                 SUM(o_totalprice) AS o_totalprice
-            FROM orders 
+            FROM orders
             WHERE o_orderdate between '{year}-01-01' and '{year}-12-31'
             GROUP BY DATEPART(week, o_orderdate)
             ORDER BY week_number;
@@ -262,8 +268,9 @@ def get_orders(source, year):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
-
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_customers_orders(source, year):
@@ -273,12 +280,12 @@ def get_customers_orders(source, year):
         conn = get_connection(source)
 
         query = f"""
-            SELECT 
+            SELECT
                 o_custkey, c_name, n_name,
-                DATEPART(week, o_orderdate) AS week_number,            
+                DATEPART(week, o_orderdate) AS week_number,
                 COUNT(*) AS order_count,
                 SUM(o_totalprice) AS o_totalprice
-            FROM orders 
+            FROM orders
             JOIN customer ON o_custkey = c_custkey
             JOIN nation ON c_nationkey = n_nationkey
             WHERE o_orderdate between '{year}-01-01' and '{year}-12-31'
@@ -295,8 +302,9 @@ def get_customers_orders(source, year):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
-
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_partsupp_orders(source, year):
@@ -306,7 +314,7 @@ def get_partsupp_orders(source, year):
         conn = get_connection(source)
 
         query = f"""
-            SELECT 
+            SELECT
                 l_partkey, l_suppkey, o.o_custkey, SUM(l_quantity) l_quantity, SUM(l_extendedprice) l_extendedprice,
                 COUNT(*) AS items_count, DATEPART(month, o_orderdate) AS month
             FROM lineitem join orders o on l_orderkey = o.o_orderkey
@@ -324,7 +332,9 @@ def get_partsupp_orders(source, year):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_nations_orders(source):
@@ -333,13 +343,13 @@ def get_nations_orders(source):
 
         conn = get_connection(source)
 
-        query = f"""
-            SELECT 
+        query = """
+            SELECT
                 n_name,
-                DATEPART(year, o_orderdate) AS year,            
+                DATEPART(year, o_orderdate) AS year,
                 COUNT(*) AS order_count,
                 SUM(o_totalprice) AS o_totalprice
-            FROM orders 
+            FROM orders
             JOIN customer ON o_custkey = c_custkey
             JOIN nation ON c_nationkey = n_nationkey
             GROUP BY n_name, DATEPART(year, o_orderdate);
@@ -355,8 +365,9 @@ def get_nations_orders(source):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
-
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_years_with_orders(source, as_data_frame=False):
@@ -365,9 +376,9 @@ def get_years_with_orders(source, as_data_frame=False):
 
         conn = get_connection(source)
 
-        query = f"""
-            SELECT 
-                DISTINCT 
+        query = """
+            SELECT
+                DISTINCT
                 DATEPART(year, o_orderdate) AS year
             FROM orders_feedback (nolock)
             WHERE conversation is not null;
@@ -387,7 +398,9 @@ def get_years_with_orders(source, as_data_frame=False):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_customers_with_orders(source, as_data_frame=False):
@@ -396,9 +409,9 @@ def get_customers_with_orders(source, as_data_frame=False):
 
         conn = get_connection(source)
 
-        query = f"""
-            SELECT 
-                DISTINCT 
+        query = """
+            SELECT
+                DISTINCT
                 cast(o_custkey as varchar(10)) + ' - ' + c_name AS customer_name
             FROM orders_feedback (nolock)
             JOIN customer on o_custkey = c_custkey
@@ -412,27 +425,29 @@ def get_customers_with_orders(source, as_data_frame=False):
         else:
             result = df.to_string(index=False)
             return result
-        
+
     except Exception as e:
         # raise exception
         tb = traceback.extract_tb(e.__traceback__)
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
-def get_partsupp_orders_agg(source, selected_year, selected_customer, having, as_data_frame = False):
+def get_partsupp_orders_agg(source, selected_year, selected_customer, having, as_data_frame=False):
 
     try:
 
         conn = get_connection(source)
 
         query = f"""
-            SELECT 
-                p_name, 
-                sum(o_totalprice) as total_price, 
-                COUNT(distinct o_orderkey) as order_count, p_type, l_partkey, l_suppkey 
+            SELECT
+                p_name,
+                sum(o_totalprice) as total_price,
+                COUNT(distinct o_orderkey) as order_count, p_type, l_partkey, l_suppkey
             FROM orders_feedback (NOLOCK)
             JOIN lineitem l ON l_orderkey = o_orderkey
             JOIN part p ON p_partkey = l_partkey
@@ -458,10 +473,20 @@ def get_partsupp_orders_agg(source, selected_year, selected_customer, having, as
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
-def get_feedback_from_partsupp(source, selected_year, selected_customer, part_key, top_n, satisfaction_type, as_data_frame = False):
+def get_feedback_from_partsupp(
+    source,
+    selected_year,
+    selected_customer,
+    part_key,
+    top_n,
+    satisfaction_type,
+    as_data_frame=False,
+):
 
     try:
 
@@ -469,13 +494,13 @@ def get_feedback_from_partsupp(source, selected_year, selected_customer, part_ke
 
         partkey_filter = ""
         if part_key != "[ALL]":
-            partkey_filter = f"WHERE l_partkey = {part_key}" 
+            partkey_filter = f"WHERE l_partkey = {part_key}"
 
         query = f"""
             WITH cte AS (
                 SELECT
                     o.product_details_json, o.o_totalprice, ofp.*, o.conversation
-                FROM orders_feedback o 
+                FROM orders_feedback o
                 JOIN orders_feedback_precomputed ofp
                 ON o.o_orderkey = ofp.o_orderkey
                 WHERE o.o_orderdate between '{selected_year}-01-01' and '{selected_year}-12-31'
@@ -509,8 +534,9 @@ def get_feedback_from_partsupp(source, selected_year, selected_customer, part_ke
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
-
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e
 
 
 def get_tables_info_data(source, as_data_frame=False):
@@ -529,12 +555,12 @@ def get_tables_info_data(source, as_data_frame=False):
 
         conn = get_connection(source)
 
-        query=""
+        query = ""
 
         if source == "azure-sql" or source == "onprem-sql":
 
-            query = f"""
-                SELECT 
+            query = """
+                SELECT
                     t.name AS table_name,
                     CAST(CAST(SUM(a.total_pages) * 8 / 1024.0 AS DECIMAL(10,2)) AS DECIMAL(10,0)) AS total_size_MB,
                     i.rows as rows_count
@@ -544,9 +570,9 @@ def get_tables_info_data(source, as_data_frame=False):
                 JOIN sys.partitions p ON i.id = p.object_id AND i.indid = p.index_id
                 JOIN sys.allocation_units a ON p.partition_id = a.container_id
                 WHERE i.rows > 100
-                GROUP BY 
+                GROUP BY
                     t.name, i.rows
-                ORDER BY 
+                ORDER BY
                     total_size_MB DESC;
             """
 
@@ -564,5 +590,6 @@ def get_tables_info_data(source, as_data_frame=False):
         frame = tb[0]
         method_name = frame.name
         file_name = os.path.basename(frame.filename)
-        raise RuntimeError(f"[{file_name}].[{method_name}] Error connecting or executing the query in the database.") from e
-
+        raise RuntimeError(
+            f"[{file_name}].[{method_name}] Error connecting or executing the query in the database."
+        ) from e

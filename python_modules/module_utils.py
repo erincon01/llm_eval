@@ -1,11 +1,11 @@
+import csv
 import os
 import re
-import csv
+
 import numpy as np
 import pandas as pd
-
-from questions import Questions
 import tabulate
+from questions import Questions
 
 
 def remove_quotations(sql_query: str) -> str:
@@ -17,12 +17,12 @@ def remove_quotations(sql_query: str) -> str:
     """
 
     changed = False
-    
+
     # Regex pattern to extract content between ```sql, ```code, or similar delimiters
     patterns = [
-        r"```(?:sql|code)?\s*(.*?)\s*```",     # ```sql ... ```
-        r"``(?:sql|code)?\s*(.*?)\s*``",       # ``sql ... ``
-        r"`(?:sql|code)?\s*(.*?)\s*``",       # ``sql ... ``
+        r"```(?:sql|code)?\s*(.*?)\s*```",  # ```sql ... ```
+        r"``(?:sql|code)?\s*(.*?)\s*``",  # ``sql ... ``
+        r"`(?:sql|code)?\s*(.*?)\s*``",  # ``sql ... ``
     ]
 
     for pattern in patterns:
@@ -32,7 +32,7 @@ def remove_quotations(sql_query: str) -> str:
             if extracted:
                 sql_query = extracted
                 changed = True
-                break 
+                break
 
     return sql_query, changed
 
@@ -115,7 +115,8 @@ def consolidate_files_by_iteration(results_path: str, file_name_prefix: str):
         file_path = os.path.join(results_path, file)
         if os.path.isfile(file_path) and file.startswith(file_name_prefix) and file.endswith(".yaml"):
             filtered_files.append(file_path)
-            # Extract the model as the last part of the file name, after the last underscore and before the ".yaml" extension
+            # Extract the model as the last part of the file name, after the last underscore and
+            # before the ".yaml" extension
             # For example: results_llm_01_DeepSeek-V3-0324.yaml
             # will extract the model "DeepSeek-V3-0324"
 
@@ -126,7 +127,7 @@ def consolidate_files_by_iteration(results_path: str, file_name_prefix: str):
                     model_names.append(match.group(1))
 
     model_names = list(set(model_names))
-    
+
     for model in model_names:
 
         agg_file_name = f"{results_path}/result_agg_{model}.yaml"
@@ -144,17 +145,16 @@ def consolidate_files_by_iteration(results_path: str, file_name_prefix: str):
 
             match = re.search(r"results_llm_(\d{2})_", f)
             if match:
-                iteration = match.group(1)            
+                iteration = match.group(1)
 
             # Add the questions to the q_agg object
             for question in all_questions:
-                question['iteration'] = iteration
+                question["iteration"] = iteration
                 q_agg.add_question(question)
 
-        
         q_agg.save_questions(yaml_file=agg_file_name)
         print(f"Consolidated file {agg_file_name} generated.")
-        
+
 
 def consolidate_files_by_model(results_path: str, file_name_prefix: str):
     """
@@ -191,7 +191,7 @@ def consolidate_files_by_model(results_path: str, file_name_prefix: str):
 
         # Add the model_name to the q_agg object
         for question in all_questions:
-            question['model_name'] = model_name
+            question["model_name"] = model_name
             q_agg.add_question(question)
 
     q_agg.save_questions(yaml_file=agg_file_name)
@@ -237,7 +237,8 @@ def consolidate_csv_files(results_path: str, file_name_prefix: str):
 def performance_report(results_path: str, file_name_prefix: str):
     """
     Load all the CSV files in the results_path folder that start with the file_name_prefix.
-    Calculate the performance of each model based on the number of rows, columns, time taken to execute the SQL query, and token costs.
+    Calculate the performance of each model based on the number of rows, columns, time taken
+    to execute the SQL query, and token costs.
     :param results_path: Path to the results folder.
     :param file_name_prefix: Prefix of the files to consolidate.
     :return: None
@@ -271,29 +272,45 @@ def performance_report(results_path: str, file_name_prefix: str):
     # Concatenate all dataframes
     all_data = pd.concat(dataframes, ignore_index=True)
 
-    all_data.rename(columns={
-        'Model': 'model',
-        'Question': 'question',
-        'Rows': 'rows',
-        'Columns': 'columns',
-        'SQL_time': 'sql_time',
-        'LLM_time': 'llm_time',
-        'Total_tokens': 'total_tokens',
-        'Prompt_tokens': 'prompt_tokens',
-        'Completion_tokens': 'completion_tokens',
-        'Percent_rows_equality': 'percent_rows_equality',
-        'Percent_columns_equality': 'percent_columns_equality',
-        'Percent_source_rows_equality': 'percent_source_rows_equality',
-        'Percent_llm_rows_equality': 'percent_llm_rows_equality',
-        'Cost_input_tokens_EUR': 'cost_input_tokens_EUR',
-        'Cost_output_tokens_EUR': 'cost_output_tokens_EUR'
-    }, inplace=True)    
+    all_data.rename(
+        columns={
+            "Model": "model",
+            "Question": "question",
+            "Rows": "rows",
+            "Columns": "columns",
+            "SQL_time": "sql_time",
+            "LLM_time": "llm_time",
+            "Total_tokens": "total_tokens",
+            "Prompt_tokens": "prompt_tokens",
+            "Completion_tokens": "completion_tokens",
+            "Percent_rows_equality": "percent_rows_equality",
+            "Percent_columns_equality": "percent_columns_equality",
+            "Percent_source_rows_equality": "percent_source_rows_equality",
+            "Percent_llm_rows_equality": "percent_llm_rows_equality",
+            "Cost_input_tokens_EUR": "cost_input_tokens_EUR",
+            "Cost_output_tokens_EUR": "cost_output_tokens_EUR",
+        },
+        inplace=True,
+    )
 
     # Validate that the required columns exist
-    required_columns = ['model', 'question', 'rows', 'columns', 'sql_time', 'llm_time',
-                        'total_tokens', 'prompt_tokens', 'completion_tokens',
-                        'percent_rows_equality', 'percent_columns_equality', 'percent_source_rows_equality',
-                        'percent_llm_rows_equality', 'cost_input_tokens_EUR', 'cost_output_tokens_EUR']
+    required_columns = [
+        "model",
+        "question",
+        "rows",
+        "columns",
+        "sql_time",
+        "llm_time",
+        "total_tokens",
+        "prompt_tokens",
+        "completion_tokens",
+        "percent_rows_equality",
+        "percent_columns_equality",
+        "percent_source_rows_equality",
+        "percent_llm_rows_equality",
+        "cost_input_tokens_EUR",
+        "cost_output_tokens_EUR",
+    ]
 
     missing_columns = [col for col in required_columns if col not in all_data.columns]
     if missing_columns:
@@ -301,106 +318,151 @@ def performance_report(results_path: str, file_name_prefix: str):
         return
 
     # Calculate the total token cost
-    all_data['total_cost_tokens_EUR'] = all_data['cost_input_tokens_EUR'] + all_data['cost_output_tokens_EUR']
+    all_data["total_cost_tokens_EUR"] = all_data["cost_input_tokens_EUR"] + all_data["cost_output_tokens_EUR"]
 
     # Standard aggregations
-    agg = all_data.groupby('model').agg(
-        queries_executed=('question', 'count'),
-        mean_sql_time=('sql_time', 'mean'),
-        mean_llm_time=('llm_time', 'mean'),
-        stdev_llm_time=('llm_time', 'std'),
-        mean_tokens=('total_tokens', 'mean'),
-        mean_source_rows_equality=('percent_source_rows_equality', 'mean'),
-        mean_llm_rows_equality=('percent_llm_rows_equality', 'mean'),
-#        mean_rows_equality=('percent_rows_equality', 'mean'),
-#        mean_columns_equality=('percent_columns_equality', 'mean'),
-        mean_cost_EUR=('total_cost_tokens_EUR', 'mean')
-    ).reset_index()
+    agg = (
+        all_data.groupby("model")
+        .agg(
+            queries_executed=("question", "count"),
+            mean_sql_time=("sql_time", "mean"),
+            mean_llm_time=("llm_time", "mean"),
+            stdev_llm_time=("llm_time", "std"),
+            mean_tokens=("total_tokens", "mean"),
+            mean_source_rows_equality=("percent_source_rows_equality", "mean"),
+            mean_llm_rows_equality=("percent_llm_rows_equality", "mean"),
+            #        mean_rows_equality=('percent_rows_equality', 'mean'),
+            #        mean_columns_equality=('percent_columns_equality', 'mean'),
+            mean_cost_EUR=("total_cost_tokens_EUR", "mean"),
+        )
+        .reset_index()
+    )
 
     cols_to_round = [
-        'mean_sql_time', 'mean_llm_time', 'stdev_llm_time', 'mean_tokens',
-        'mean_source_rows_equality', 'mean_llm_rows_equality', #'mean_rows_equality', 'mean_columns_equality'
+        "mean_sql_time",
+        "mean_llm_time",
+        "stdev_llm_time",
+        "mean_tokens",
+        "mean_source_rows_equality",
+        # 'mean_rows_equality', 'mean_columns_equality'
+        "mean_llm_rows_equality",
     ]
     agg[cols_to_round] = agg[cols_to_round].round(2)
-    agg['mean_cost_EUR'] = agg['mean_cost_EUR'].round(6)
+    agg["mean_cost_EUR"] = agg["mean_cost_EUR"].round(6)
 
     print("\nPerformance Report per model:\n")
-    print(tabulate.tabulate(agg, headers='keys', tablefmt='pipe', showindex=False))
+    print(tabulate.tabulate(agg, headers="keys", tablefmt="pipe", showindex=False))
 
-    agg_queries = all_data.groupby(['question']).agg(
-        mean_llm_time=('llm_time', 'mean'),
-        stdev_llm_time=('llm_time', 'std'),
-        mean_source_rows_equality=('percent_source_rows_equality', 'mean'),
-        mean_llm_rows_equality=('percent_llm_rows_equality', 'mean'),
-        mean_rows_equality=('percent_rows_equality', 'mean'),
-        mean_columns_equality=('percent_columns_equality', 'mean')
-    ).reset_index()
+    agg_queries = (
+        all_data.groupby(["question"])
+        .agg(
+            mean_llm_time=("llm_time", "mean"),
+            stdev_llm_time=("llm_time", "std"),
+            mean_source_rows_equality=("percent_source_rows_equality", "mean"),
+            mean_llm_rows_equality=("percent_llm_rows_equality", "mean"),
+            mean_rows_equality=("percent_rows_equality", "mean"),
+            mean_columns_equality=("percent_columns_equality", "mean"),
+        )
+        .reset_index()
+    )
 
     cols_to_round = [
-        'mean_llm_time', 'stdev_llm_time',
-        'mean_source_rows_equality', 'mean_llm_rows_equality', 'mean_rows_equality', 'mean_columns_equality'
+        "mean_llm_time",
+        "stdev_llm_time",
+        "mean_source_rows_equality",
+        "mean_llm_rows_equality",
+        "mean_rows_equality",
+        "mean_columns_equality",
     ]
     agg_queries[cols_to_round] = agg_queries[cols_to_round].round(2)
 
     print("\nPerformance Report per query:\n")
 
-    print(tabulate.tabulate(agg_queries, headers='keys', tablefmt='pipe', showindex=False))
+    print(tabulate.tabulate(agg_queries, headers="keys", tablefmt="pipe", showindex=False))
 
     # Print the best model names based on the average LLM time
-    best_models = agg.sort_values(by='mean_llm_time')# .head(6)
-    print(f"\nBest models based on average LLM time:\n\n")
-    print(tabulate.tabulate(best_models[['model', 'mean_llm_time']], headers='keys', tablefmt='pipe', showindex=False))
+    best_models = agg.sort_values(by="mean_llm_time")  # .head(6)
+    print("\nBest models based on average LLM time:\n\n")
+    print(
+        tabulate.tabulate(
+            best_models[["model", "mean_llm_time"]],
+            headers="keys",
+            tablefmt="pipe",
+            showindex=False,
+        )
+    )
 
     # Sort by mean token cost
-    best_cost_models = agg.sort_values(by='mean_cost_EUR')# .head(6)
-    print(f"\nBest models based on mean token cost:\n")
-    print(tabulate.tabulate(best_cost_models[['model', 'mean_cost_EUR']], headers='keys', tablefmt='pipe', showindex=False))
+    best_cost_models = agg.sort_values(by="mean_cost_EUR")  # .head(6)
+    print("\nBest models based on mean token cost:\n")
+    print(
+        tabulate.tabulate(
+            best_cost_models[["model", "mean_cost_EUR"]],
+            headers="keys",
+            tablefmt="pipe",
+            showindex=False,
+        )
+    )
 
     # Print the best model names based on the average data_rows_equality
-    best_data_rows_equality = agg.sort_values(by='mean_source_rows_equality', ascending=False)#.head(6)
-    print(f"\nBest models based on average data rows equality:\n\n")
-    print(tabulate.tabulate(best_data_rows_equality[['model', 'mean_source_rows_equality']], headers='keys', tablefmt='pipe', showindex=False))
+    best_data_rows_equality = agg.sort_values(by="mean_source_rows_equality", ascending=False)  # .head(6)
+    print("\nBest models based on average data rows equality:\n\n")
+    print(
+        tabulate.tabulate(
+            best_data_rows_equality[["model", "mean_source_rows_equality"]],
+            headers="keys",
+            tablefmt="pipe",
+            showindex=False,
+        )
+    )
 
-    # add a column to the agg dataframe that represents the ranking of the model based in the total cost EUR: name it rank_price
-    agg['rank_quality'] = agg['mean_source_rows_equality'].rank(method='min', ascending=False).astype(int)
-    agg['rank_price'] = agg['mean_cost_EUR'].rank(method='min', ascending=True).astype(int)
-    agg['rank_time'] = agg['mean_llm_time'].rank(method='min', ascending=True).astype(int)
+    # add a column to the agg dataframe that represents the ranking of the model
+    # based in the total cost EUR: name it rank_price
+    agg["rank_quality"] = agg["mean_source_rows_equality"].rank(method="min", ascending=False).astype(int)
+    agg["rank_price"] = agg["mean_cost_EUR"].rank(method="min", ascending=True).astype(int)
+    agg["rank_time"] = agg["mean_llm_time"].rank(method="min", ascending=True).astype(int)
 
-    cols_rank = ['rank_quality', 'rank_time', 'rank_price']
+    cols_rank = ["rank_quality", "rank_time", "rank_price"]
 
     # Convertir rankings mayores que 8 en ''
     for col in cols_rank:
-        agg[col] = agg[col].apply(lambda x: str(x) if x <= 8 and x > 0 else '')
+        agg[col] = agg[col].apply(lambda x: str(x) if x <= 8 and x > 0 else "")
 
-    # añade a cada columna de rank_quality un guion - y en valor entre () de mean_source_rows_equality cuando la columna no esté vacia
-    agg['rank_quality'] = agg.apply(
-        lambda row: f"{row['rank_quality']} ({row['mean_source_rows_equality']})" if row['rank_quality'] != '' else '',
-        axis=1
+    # añade a cada columna de rank_quality un guion - y en valor entre ()
+    # de mean_source_rows_equality cuando la columna no esté vacia
+    agg["rank_quality"] = agg.apply(
+        lambda row: (
+            f"{row['rank_quality']} ({row['mean_source_rows_equality']})" if row["rank_quality"] != "" else ""
+        ),
+        axis=1,
     )
-    agg['rank_time'] = agg.apply(
-        lambda row: f"{row['rank_time']} ({row['mean_llm_time']})" if row['rank_time'] != '' else '',
-        axis=1
+    agg["rank_time"] = agg.apply(
+        lambda row: (f"{row['rank_time']} ({row['mean_llm_time']})" if row["rank_time"] != "" else ""),
+        axis=1,
     )
-    agg['rank_price'] = agg.apply(
-        lambda row: f"{row['rank_price']} ({row['mean_cost_EUR']})" if row['rank_price'] != '' else '',
-        axis=1
+    agg["rank_price"] = agg.apply(
+        lambda row: (f"{row['rank_price']} ({row['mean_cost_EUR']})" if row["rank_price"] != "" else ""),
+        axis=1,
     )
 
     # Paso 1: Convertir valores a números temporales para ordenar
     for col in cols_rank:
-        agg[f"_sort_{col}"] = agg[col].apply(lambda x: int(str(x).split()[0]) if x != '' else np.inf)
+        agg[f"_sort_{col}"] = agg[col].apply(lambda x: int(str(x).split()[0]) if x != "" else np.inf)
 
     # Paso 2: Ordenar usando las columnas auxiliares
-    agg = agg.sort_values(
-        by=[f"_sort_{col}" for col in cols_rank],
-        ascending=True
-    ).reset_index(drop=True)
+    agg = agg.sort_values(by=[f"_sort_{col}" for col in cols_rank], ascending=True).reset_index(drop=True)
 
     # Paso 3: Eliminar columnas auxiliares
     agg.drop(columns=[f"_sort_{col}" for col in cols_rank], inplace=True)
 
     print("\n\nRanking of the models based on the total cost, LLM time and source rows equality:\n")
-    print(tabulate.tabulate(agg[['model', 'rank_quality', 'rank_time', 'rank_price']], headers='keys', tablefmt='pipe', showindex=False))
+    print(
+        tabulate.tabulate(
+            agg[["model", "rank_quality", "rank_time", "rank_price"]],
+            headers="keys",
+            tablefmt="pipe",
+            showindex=False,
+        )
+    )
 
-    print(f"\n\n")
-
+    print("\n\n")

@@ -11,7 +11,7 @@ from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 
 # from openai import AzureOpenAI -- previous import statement without langfuse
-from langfuse.decorators import langfuse_context, observe
+from langfuse import get_client, observe
 from langfuse.openai import AzureOpenAI
 
 # pip install langfuse anthropic google-cloud-aiplatform
@@ -144,8 +144,9 @@ def get_chat_completion_from_platform(
 
             if langfuse_enabled:
 
-                langfuse_context.update_current_observation(
-                    tags=["azure_openai_call", "qa"],
+                langfuse = get_client()
+                langfuse.update_current_trace(tags=["azure_openai_call", "qa"])
+                langfuse.update_current_span(
                     metadata={
                         "platform": platform,
                         "model": model,
@@ -153,7 +154,7 @@ def get_chat_completion_from_platform(
                         "total_tokens": total_tokens,
                         "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
-                    },
+                    }
                 )
 
             return output, metadata_json
@@ -206,8 +207,9 @@ def get_chat_completion_from_platform(
             }
 
             if langfuse_enabled:
-                langfuse_context.update_current_observation(
-                    tags=["anthropic_call", "qa"],
+                langfuse = get_client()
+                langfuse.update_current_trace(tags=["anthropic_call", "qa"])
+                langfuse.update_current_span(
                     metadata={
                         "platform": platform,
                         "model": model,
@@ -215,7 +217,7 @@ def get_chat_completion_from_platform(
                         "total_tokens": total_tokens,
                         "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
-                    },
+                    }
                 )
 
             return output, metadata_json
@@ -260,10 +262,9 @@ def get_chat_completion_from_platform(
             }
 
             if langfuse_enabled:
-
-                langfuse_context.update_current_trace(
-                    tags=["deepseek_call", "qa"],
-                    metadata={"platform": platform, "model": model},
+                langfuse = get_client()
+                langfuse.update_current_trace(
+                    tags=["deepseek_call", "qa"], metadata={"platform": platform, "model": model}
                 )
 
             return output, metadata_json

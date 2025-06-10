@@ -6,7 +6,7 @@ import pandas as pd
 import yaml
 from database_schema_tables import Database_schema_tables
 from dotenv import load_dotenv
-from langfuse.decorators import langfuse_context, observe
+from langfuse import get_client, observe
 from module_data import get_dynamic_sql
 from module_llm import get_chat_completion_from_platform
 from module_utils import align_columns_by_first_row, normalize_numeric_columns, remove_quotations
@@ -219,7 +219,7 @@ class LLMsEvaluator:
             # Call the LLM to get the SQL query
             sql_query, metadata_json = get_chat_completion_from_platform(
                 platform,
-                model,
+                model["name"],
                 system_message,
                 user_prompt,
                 temperature,
@@ -236,11 +236,14 @@ class LLMsEvaluator:
             print(f"Duration: {duration} seconds")
             print(f"SQL to execute: {sql_query}")
 
-        langfuse_context.update_current_observation(
-            tags=["qa"],
+        langfuse = get_client()
+
+        langfuse.update_current_trace(tags=["qa"])
+
+        langfuse.update_current_span(
             metadata={
                 "question_number": question_number,
-            },
+            }
         )
 
         return sql_query, metadata_json
@@ -488,7 +491,8 @@ class LLMsEvaluator:
         total_time_sql = round(total_time_sql, 2)
         total_time_llm = round(total_time_llm, 2)
 
-        langfuse_context.update_current_observation(
+        langfuse = get_client()
+        langfuse.update_current_trace(
             user_id="demo_user",
             session_id=batch_id,
             tags=["qa"],

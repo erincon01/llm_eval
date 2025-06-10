@@ -3,7 +3,7 @@ import traceback
 import urllib
 
 import pandas as pd
-from langfuse.decorators import observe
+from langfuse import observe
 from sqlalchemy import create_engine, text
 
 

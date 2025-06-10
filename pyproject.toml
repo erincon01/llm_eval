@@ -12,7 +12,8 @@ readme = "README.md"
 packages = [{ include = "llm_eval" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.10,<4.0"
+langfuse = "3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"

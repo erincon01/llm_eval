@@ -2,11 +2,10 @@ import os
 import sys
 import time
 
-from llms_evaluator import LLMsEvaluator
-from module_utils import performance_report
+from python_modules.llms_evaluator import LLMsEvaluator
+from python_modules.utils.reporting_utils import performance_report
 
 sys.path.append(os.path.abspath("./python_modules"))
-
 
 if __name__ == "__main__":
     """

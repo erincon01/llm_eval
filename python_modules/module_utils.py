@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pandas as pd
 import tabulate
-from questions import Questions
+from data.questions import Questions
 
 
 def remove_quotations(sql_query: str) -> str:

@@ -2,7 +2,9 @@ import time
 import uuid
 
 from langfuse import get_client, observe
-from utils.data_utils import DataUtils, remove_quotations
+
+from utils.data_utils import DataUtils
+from utils.sql_utils import remove_quotations
 
 
 class QuestionProcessor:

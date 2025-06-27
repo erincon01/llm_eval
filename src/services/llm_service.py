@@ -1,4 +1,5 @@
 from langfuse import get_client, observe
+
 from utils.llm_utils import get_chat_completion_from_platform
 
 

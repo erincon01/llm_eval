@@ -1,19 +1,17 @@
 import os
 
+from dotenv import load_dotenv
+
 from core.baseline_executor import BaselineExecutor
 from core.model_evaluator import ModelEvaluator
 from core.question_processor import QuestionProcessor
 from data.models_config import ModelsConfig
 from data.questions import Questions
-from dotenv import load_dotenv
+from data.schema import Database_schema_tables
 from services.database_service import DatabaseService
 from services.llm_service import LLMService
 from utils.data_utils import DataUtils
 from utils.file_utils import FileUtils
-
-from python_modules.schema import Database_schema_tables
-
-# sys.path.append(os.path.abspath('./python_modules'))
 
 
 class LLMsEvaluator:

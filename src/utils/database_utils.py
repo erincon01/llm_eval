@@ -2,8 +2,9 @@ import os
 import traceback
 
 import pandas as pd
-from services.database_service import DatabaseService
 from sqlalchemy import text
+
+from services.database_service import DatabaseService
 
 
 def get_database_schema(source: str, as_data_frame: bool = False):

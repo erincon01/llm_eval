@@ -9,7 +9,13 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-package-mode = false
+
+packages = [
+  { include = "core", from = "src" },
+  { include = "utils", from = "src" },
+  { include = "data", from= "src"},
+  { include = "services", from = "src"}
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"

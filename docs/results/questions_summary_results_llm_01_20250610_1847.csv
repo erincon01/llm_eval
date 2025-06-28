@@ -1,0 +1,1 @@
+Timestamp	Question	Model	LLM_time	SQL_time	Rows	Columns	Percent_rows_equality	Percent_columns_equality	Percent_source_rows_equality	Percent_llm_rows_equality	Total_tokens	Prompt_tokens	Completion_tokens	Cost_total_EUR	Cost_input_tokens_EUR	Cost_output_tokens_EUR

@@ -17,38 +17,26 @@ questions:
     GROUP BY c.c_custkey, c.c_name
     HAVING COUNT(o.o_orderkey) > 10
     ORDER BY total_amount DESC;
-  llm_sql_query: |-
-    SELECT
-        c.c_custkey AS customer_id,
-        c.c_name    AS customer_name,
-        COUNT(*)    AS num_orders,
-        SUM(o.o_totalprice) AS total_amount
-    FROM customer c
-    JOIN orders  o ON o.o_custkey = c.c_custkey
-    WHERE c.c_mktsegment = 'BUILDING'
-      AND o.o_orderdate BETWEEN '1996-01-01' AND '1996-12-31'
-    GROUP BY c.c_custkey, c.c_name
-    HAVING COUNT(*) > 10
-    ORDER BY total_amount DESC;
+  llm_sql_query: ''
   tables_used:
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 4
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.5
-  duration_llm: 1.81
-  prompt_tokens: 1644
-  completion_tokens: 123
-  total_tokens: 1767
-  cost_input_EUR: 0.00411
-  cost_output_EUR: 0.00123
-  cost_total_EUR: 0.00534
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 2
@@ -65,37 +53,27 @@ questions:
     JOIN supplier s ON n.n_nationkey = s.s_nationkey
     GROUP BY r.r_regionkey, r.r_name
     ORDER BY avg_balance DESC;
-  llm_sql_query: |-
-    SELECT
-        r.r_regionkey AS region_id,
-        r.r_name AS region_name,
-        AVG(s.s_acctbal) AS avg_supplier_account_balance,
-        COUNT(DISTINCT s.s_suppkey) AS num_suppliers
-    FROM region r
-    JOIN nation n ON n.n_regionkey = r.r_regionkey
-    JOIN supplier s ON s.s_nationkey = n.n_nationkey
-    GROUP BY r.r_regionkey, r.r_name
-    ORDER BY avg_supplier_account_balance DESC;
+  llm_sql_query: ''
   tables_used:
   - region
   - nation
   - supplier
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 5
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.06
-  duration_llm: 2.34
-  prompt_tokens: 1553
-  completion_tokens: 103
-  total_tokens: 1656
-  cost_input_EUR: 0.003883
-  cost_output_EUR: 0.00103
-  cost_total_EUR: 0.004913
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 3
@@ -111,34 +89,26 @@ questions:
     GROUP BY p.p_partkey, p.p_name
     ORDER BY total_quantity DESC
     OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
-  llm_sql_query: |-
-    SELECT TOP 5
-        p.p_partkey AS part_id,
-        p.p_name AS part_name,
-        SUM(l.l_quantity) AS total_quantity
-    FROM part p
-    JOIN lineitem l ON l.l_partkey = p.p_partkey
-    GROUP BY p.p_partkey, p.p_name
-    ORDER BY total_quantity DESC;
+  llm_sql_query: ''
   tables_used:
   - part
   - lineitem
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 5
-  columns: 3
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 7.37
-  duration_llm: 1.31
-  prompt_tokens: 1837
-  completion_tokens: 69
-  total_tokens: 1906
-  cost_input_EUR: 0.004593
-  cost_output_EUR: 0.00069
-  cost_total_EUR: 0.005283
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 4
@@ -173,54 +143,29 @@ questions:
     FROM yearly_totals
     WHERE rn <= 5
     ORDER BY order_year, total_quantity DESC;
-  llm_sql_query: |-
-    WITH ranked_parts AS (
-        SELECT
-            YEAR(o.o_orderdate) AS order_year,
-            p.p_partkey AS part_id,
-            p.p_name AS part_name,
-            SUM(l.l_quantity) AS total_quantity,
-            RANK() OVER (PARTITION BY YEAR(o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) AS part_rank
-        FROM customer c
-        JOIN orders o ON o.o_custkey = c.c_custkey
-        JOIN lineitem l ON l.l_orderkey = o.o_orderkey
-        JOIN part p ON p.p_partkey = l.l_partkey
-        JOIN nation n ON c.c_nationkey = n.n_nationkey
-        JOIN region r ON n.n_regionkey = r.r_regionkey
-        WHERE r.r_name = 'ASIA'
-          AND YEAR(o.o_orderdate) BETWEEN 1992 AND 1994
-        GROUP BY YEAR(o.o_orderdate), p.p_partkey, p.p_name
-    )
-    SELECT
-        order_year,
-        part_id,
-        part_name,
-        total_quantity
-    FROM ranked_parts
-    WHERE part_rank <= 5
-    ORDER BY order_year, total_quantity DESC;
+  llm_sql_query: ''
   tables_used:
   - part
   - lineitem
   - orders
   - customer
   - nation
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 15
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 5.3
-  duration_llm: 3.04
-  prompt_tokens: 2165
-  completion_tokens: 244
-  total_tokens: 2409
-  cost_input_EUR: 0.005413
-  cost_output_EUR: 0.00244
-  cost_total_EUR: 0.007853
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 5
@@ -243,44 +188,29 @@ questions:
       AND p.p_type = 'SMALL PLATED STEEL'
     GROUP BY l.l_suppkey, s.s_name
     ORDER BY s.s_name ASC;
-  llm_sql_query: |-
-    SELECT
-        s.s_suppkey AS supplier_id,
-        s.s_name AS supplier_name,
-        COUNT(DISTINCT s.s_suppkey) AS num_unique_suppliers,
-        SUM(ps.ps_supplycost * ps.ps_availqty) / SUM(ps.ps_availqty) AS weighted_avg_supply_cost
-    FROM orders o
-    JOIN lineitem l ON l.l_orderkey = o.o_orderkey
-    JOIN part p ON p.p_partkey = l.l_partkey
-    JOIN partsupp ps ON ps.ps_partkey = p.p_partkey AND ps.ps_suppkey = l.l_suppkey
-    JOIN supplier s ON s.s_suppkey = ps.ps_suppkey
-    WHERE o.o_orderdate BETWEEN '1994-01-01' AND '1994-12-31'
-      AND p.p_type = 'SMALL PLATED STEEL'
-      AND p.p_size = 4
-    GROUP BY s.s_suppkey, s.s_name
-    ORDER BY s.s_name;
+  llm_sql_query: ''
   tables_used:
   - orders
   - lineitem
   - partsupp
   - part
   - supplier
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 123
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 0.75
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
   percent_source_rows_equality: 0.0
   percent_llm_rows_equality: 0.0
-  duration_sql: 3.23
-  duration_llm: 3.02
-  prompt_tokens: 2185
-  completion_tokens: 205
-  total_tokens: 2390
-  cost_input_EUR: 0.005463
-  cost_output_EUR: 0.00205
-  cost_total_EUR: 0.007513
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 6
@@ -303,41 +233,28 @@ questions:
     GROUP BY s.s_suppkey, s.s_name
     ORDER BY total_cost DESC
     OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
-  llm_sql_query: |-
-    SELECT TOP 10
-        s.s_suppkey AS supplier_id,
-        s.s_name AS supplier_name,
-        SUM(ps.ps_supplycost * ps.ps_availqty) AS total_supply_cost
-    FROM supplier s
-    JOIN partsupp ps ON ps.ps_suppkey = s.s_suppkey
-    JOIN part p ON p.p_partkey = ps.ps_partkey
-    JOIN nation n ON n.n_nationkey = s.s_nationkey
-    WHERE n.n_name = 'GERMANY'
-      AND p.p_type = 'SMALL PLATED STEEL'
-      AND p.p_size = 4
-    GROUP BY s.s_suppkey, s.s_name
-    ORDER BY total_supply_cost DESC;
+  llm_sql_query: ''
   tables_used:
   - supplier
   - partsupp
   - nation
   - part
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 10
-  columns: 3
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.42
-  duration_llm: 2.37
-  prompt_tokens: 1724
-  completion_tokens: 145
-  total_tokens: 1869
-  cost_input_EUR: 0.00431
-  cost_output_EUR: 0.00145
-  cost_total_EUR: 0.00576
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 7
@@ -354,33 +271,25 @@ questions:
     WHERE YEAR(o_orderdate) BETWEEN 1992 AND 1998
     GROUP BY YEAR(o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: |-
-    SELECT
-        YEAR(o.o_orderdate) AS order_year,
-        COUNT(*) AS num_orders,
-        ROUND(AVG(o.o_totalprice), 2) AS avg_order_price
-    FROM orders o
-    WHERE o.o_orderdate BETWEEN '1992-01-01' AND '1998-12-31'
-    GROUP BY YEAR(o.o_orderdate)
-    ORDER BY order_year ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 7
-  columns: 3
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.88
-  duration_llm: 2.18
-  prompt_tokens: 1582
-  completion_tokens: 79
-  total_tokens: 1661
-  cost_input_EUR: 0.003955
-  cost_output_EUR: 0.00079
-  cost_total_EUR: 0.004745
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 8
@@ -400,38 +309,27 @@ questions:
     GROUP BY n.n_nationkey, n.n_name
     ORDER BY total_amount DESC
     OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY;
-  llm_sql_query: |-
-    SELECT TOP 3
-        n.n_nationkey AS nation_id,
-        n.n_name AS nation_name,
-        COUNT(*) AS num_orders,
-        SUM(o.o_totalprice) AS total_amount
-    FROM nation n
-    JOIN customer c ON c.c_nationkey = n.n_nationkey
-    JOIN orders o ON o.o_custkey = c.c_custkey
-    WHERE o.o_orderdate BETWEEN '1997-01-01' AND '1997-12-31'
-    GROUP BY n.n_nationkey, n.n_name
-    ORDER BY total_amount DESC;
+  llm_sql_query: ''
   tables_used:
   - nation
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 3
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.57
-  duration_llm: 2.68
-  prompt_tokens: 1702
-  completion_tokens: 119
-  total_tokens: 1821
-  cost_input_EUR: 0.004255
-  cost_output_EUR: 0.00119
-  cost_total_EUR: 0.005445
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 9
@@ -451,41 +349,28 @@ questions:
       AND MONTH(o.o_orderdate) = 12
     GROUP BY YEAR(o.o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: |-
-    SELECT
-        YEAR(o.o_orderdate) AS order_year,
-        COUNT(*) AS num_orders,
-        SUM(o.o_totalprice) AS total_amount
-    FROM orders o
-    JOIN customer c ON o.o_custkey = c.c_custkey
-    JOIN nation n ON c.c_nationkey = n.n_nationkey
-    JOIN region r ON n.n_regionkey = r.r_regionkey
-    WHERE r.r_name = 'EUROPE'
-      AND c.c_mktsegment = 'AUTOMOBILE'
-      AND MONTH(o.o_orderdate) = 12
-    GROUP BY YEAR(o.o_orderdate)
-    ORDER BY order_year ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
   - customer
   - nation
   - region
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 4
-  columns: 3
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.78
-  duration_llm: 2.73
-  prompt_tokens: 1743
-  completion_tokens: 131
-  total_tokens: 1874
-  cost_input_EUR: 0.004358
-  cost_output_EUR: 0.00131
-  cost_total_EUR: 0.005668
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 10
@@ -503,36 +388,26 @@ questions:
     GROUP BY c.c_custkey, c.c_name, c.c_acctbal
     HAVING COUNT(o.o_orderkey) > 10 AND c.c_acctbal > 6000
     ORDER BY customer_name ASC;
-  llm_sql_query: |-
-    SELECT
-        c.c_custkey AS customer_id,
-        c.c_name AS customer_name,
-        c.c_acctbal AS account_balance,
-        COUNT(o.o_orderkey) AS num_orders
-    FROM customer c
-    JOIN orders o ON o.o_custkey = c.c_custkey
-    GROUP BY c.c_custkey, c.c_name, c.c_acctbal
-    HAVING COUNT(o.o_orderkey) > 10 AND c.c_acctbal > 6000
-    ORDER BY c.c_name;
+  llm_sql_query: ''
   tables_used:
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 19
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 2.04
-  duration_llm: 1.85
-  prompt_tokens: 1663
-  completion_tokens: 108
-  total_tokens: 1771
-  cost_input_EUR: 0.004158
-  cost_output_EUR: 0.00108
-  cost_total_EUR: 0.005238
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 11
@@ -548,33 +423,26 @@ questions:
     GROUP BY p.p_type
     ORDER BY total_quantity DESC
     OFFSET 0 ROWS FETCH NEXT 15 ROWS ONLY;
-  llm_sql_query: |-
-    SELECT TOP 15
-        p.p_type AS part_type,
-        SUM(l.l_quantity) AS total_quantity_sold
-    FROM part p
-    JOIN lineitem l ON l.l_partkey = p.p_partkey
-    GROUP BY p.p_type
-    ORDER BY total_quantity_sold DESC;
+  llm_sql_query: ''
   tables_used:
   - part
   - lineitem
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 15
-  columns: 2
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 6.09
-  duration_llm: 1.47
-  prompt_tokens: 1855
-  completion_tokens: 59
-  total_tokens: 1914
-  cost_input_EUR: 0.004638
-  cost_output_EUR: 0.00059
-  cost_total_EUR: 0.005228
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 12
@@ -590,33 +458,25 @@ questions:
       AND o_orderdate < '1995-01-01'
     GROUP BY YEAR(o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: |-
-    SELECT
-        YEAR(o.o_orderdate) AS order_year,
-        COUNT(*) AS num_orders
-    FROM orders o
-    WHERE o.o_totalprice > 100000
-      AND o.o_orderdate < '1995-01-01'
-    GROUP BY YEAR(o.o_orderdate)
-    ORDER BY order_year ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 3
-  columns: 2
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.38
-  duration_llm: 1.87
-  prompt_tokens: 1555
-  completion_tokens: 64
-  total_tokens: 1619
-  cost_input_EUR: 0.003888
-  cost_output_EUR: 0.00064
-  cost_total_EUR: 0.004528
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 13
@@ -636,38 +496,26 @@ questions:
     HAVING SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
        AND SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
     ORDER BY customer_name ASC;
-  llm_sql_query: |-
-    SELECT
-        c.c_custkey AS customer_id,
-        c.c_name AS customer_name,
-        SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) AS num_orders_1994,
-        SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) AS num_orders_1995
-    FROM customer c
-    JOIN orders o ON o.o_custkey = c.c_custkey
-    WHERE YEAR(o.o_orderdate) IN (1994, 1995)
-    GROUP BY c.c_custkey, c.c_name
-    HAVING SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
-       AND SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
-    ORDER BY c.c_name ASC;
+  llm_sql_query: ''
   tables_used:
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 6
-  columns: 4
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.9
-  duration_llm: 2.87
-  prompt_tokens: 1667
-  completion_tokens: 192
-  total_tokens: 1859
-  cost_input_EUR: 0.004168
-  cost_output_EUR: 0.00192
-  cost_total_EUR: 0.006088
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 14
@@ -687,40 +535,28 @@ questions:
       AND YEAR(o.o_orderdate) = 1992
     GROUP BY YEAR(o.o_orderdate), MONTH(o.o_orderdate)
     ORDER BY order_month ASC;
-  llm_sql_query: |-
-    SELECT
-        YEAR(o.o_orderdate) AS order_year,
-        MONTH(o.o_orderdate) AS order_month,
-        COUNT(*) AS num_orders
-    FROM orders o
-    JOIN customer c ON o.o_custkey = c.c_custkey
-    JOIN nation n ON c.c_nationkey = n.n_nationkey
-    JOIN region r ON n.n_regionkey = r.r_regionkey
-    WHERE r.r_name = 'AMERICA'
-      AND YEAR(o.o_orderdate) = 1992
-    GROUP BY YEAR(o.o_orderdate), MONTH(o.o_orderdate)
-    ORDER BY order_year ASC, order_month ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
   - customer
   - nation
   - region
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 3
-  columns: 3
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 2.01
-  duration_llm: 2.56
-  prompt_tokens: 1730
-  completion_tokens: 128
-  total_tokens: 1858
-  cost_input_EUR: 0.004325
-  cost_output_EUR: 0.00128
-  cost_total_EUR: 0.005605
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 15
@@ -743,43 +579,25 @@ questions:
                             [Jul], [Aug], [Sep], [Oct], [Nov], [Dec])
     ) AS pivot_table
     ORDER BY order_year ASC;
-  llm_sql_query: |-
-    SELECT
-        YEAR(o_orderdate) AS order_year,
-        SUM(CASE WHEN MONTH(o_orderdate) = 1 THEN 1 ELSE 0 END) AS Jan,
-        SUM(CASE WHEN MONTH(o_orderdate) = 2 THEN 1 ELSE 0 END) AS Feb,
-        SUM(CASE WHEN MONTH(o_orderdate) = 3 THEN 1 ELSE 0 END) AS Mar,
-        SUM(CASE WHEN MONTH(o_orderdate) = 4 THEN 1 ELSE 0 END) AS Apr,
-        SUM(CASE WHEN MONTH(o_orderdate) = 5 THEN 1 ELSE 0 END) AS May,
-        SUM(CASE WHEN MONTH(o_orderdate) = 6 THEN 1 ELSE 0 END) AS Jun,
-        SUM(CASE WHEN MONTH(o_orderdate) = 7 THEN 1 ELSE 0 END) AS Jul,
-        SUM(CASE WHEN MONTH(o_orderdate) = 8 THEN 1 ELSE 0 END) AS Aug,
-        SUM(CASE WHEN MONTH(o_orderdate) = 9 THEN 1 ELSE 0 END) AS Sep,
-        SUM(CASE WHEN MONTH(o_orderdate) = 10 THEN 1 ELSE 0 END) AS Oct,
-        SUM(CASE WHEN MONTH(o_orderdate) = 11 THEN 1 ELSE 0 END) AS Nov,
-        SUM(CASE WHEN MONTH(o_orderdate) = 12 THEN 1 ELSE 0 END) AS Dec
-    FROM orders
-    WHERE o_orderdate BETWEEN '1992-01-01' AND '1995-12-31'
-    GROUP BY YEAR(o_orderdate)
-    ORDER BY order_year ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 4
-  columns: 13
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 3.27
-  duration_llm: 4.2
-  prompt_tokens: 1559
-  completion_tokens: 339
-  total_tokens: 1898
-  cost_input_EUR: 0.003898
-  cost_output_EUR: 0.00339
-  cost_total_EUR: 0.007288
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 16
@@ -830,68 +648,27 @@ questions:
     WHERE prev_year_amount IS NOT NULL
       AND (total_amount - prev_year_amount) > 0
     ORDER BY yoy_percent_change DESC;
-  llm_sql_query: |-
-    WITH customer_spending AS (
-        SELECT
-            c.c_custkey AS customer_id,
-            c.c_name AS customer_name,
-            YEAR(o.o_orderdate) AS order_year,
-            DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
-            SUM(o.o_totalprice) AS total_spend
-        FROM customer c
-        JOIN nation n ON c.c_nationkey = n.n_nationkey
-        JOIN orders o ON o.o_custkey = c.c_custkey
-        WHERE n.n_name = 'UNITED KINGDOM'
-        GROUP BY c.c_custkey, c.c_name, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
-    ),
-    yearly_comparison AS (
-        SELECT
-            cs.customer_id,
-            cs.customer_name,
-            cs.order_year,
-            cs.order_quarter,
-            cs.total_spend,
-            ROUND(
-                (cs.total_spend - LAG(cs.total_spend) OVER (
-                    PARTITION BY cs.customer_id, cs.order_quarter
-                    ORDER BY cs.order_year
-                )) * 100.0 / NULLIF(LAG(cs.total_spend) OVER (
-                    PARTITION BY cs.customer_id, cs.order_quarter
-                    ORDER BY cs.order_year
-                ), 0), 2
-            ) AS yoy_percent_change
-        FROM customer_spending cs
-    )
-    SELECT TOP 20
-        yc.customer_id,
-        yc.customer_name,
-        yc.order_year,
-        yc.order_quarter,
-        yc.total_spend,
-        yc.yoy_percent_change
-    FROM yearly_comparison yc
-    WHERE yc.yoy_percent_change > 0
-    ORDER BY yc.yoy_percent_change DESC;
+  llm_sql_query: ''
   tables_used:
   - customer
   - orders
   - nation
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 20
-  columns: 6
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 1.8
-  duration_llm: 6.16
-  prompt_tokens: 1744
-  completion_tokens: 353
-  total_tokens: 2097
-  cost_input_EUR: 0.00436
-  cost_output_EUR: 0.00353
-  cost_total_EUR: 0.00789
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 17
@@ -937,65 +714,28 @@ questions:
         total_amount - prev_q_amount AS delta_vs_prev_q
     FROM lag_calc
     ORDER BY region_name, order_year, order_quarter;
-  llm_sql_query: |-
-    WITH filtered_data AS (
-        SELECT
-            r.r_regionkey AS region_id,
-            r.r_name AS region_name,
-            YEAR(o.o_orderdate) AS order_year,
-            DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
-            SUM(o.o_totalprice) AS quarterly_revenue
-        FROM region r
-        JOIN nation n ON n.n_regionkey = r.r_regionkey
-        JOIN customer c ON c.c_nationkey = n.n_nationkey
-        JOIN orders o ON o.o_custkey = c.c_custkey
-        WHERE r.r_name IN ('EUROPE', 'AMERICA')
-          AND o.o_orderdate BETWEEN '1995-01-01' AND '1997-12-31'
-        GROUP BY r.r_regionkey, r.r_name, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
-    ),
-    revenue_with_delta AS (
-        SELECT
-            region_id,
-            region_name,
-            order_year,
-            order_quarter,
-            quarterly_revenue,
-            quarterly_revenue - LAG(quarterly_revenue) OVER (
-                PARTITION BY region_id, order_year
-                ORDER BY order_quarter
-            ) AS delta_vs_prev_q
-        FROM filtered_data
-    )
-    SELECT
-        region_id,
-        region_name,
-        order_year,
-        order_quarter,
-        quarterly_revenue AS revenue,
-        delta_vs_prev_q
-    FROM revenue_with_delta
-    ORDER BY region_id, order_year, order_quarter;
+  llm_sql_query: ''
   tables_used:
   - region
   - nation
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 16
-  columns: 6
-  percent_rows_equality: 1.0
-  percent_columns_equality: 0.83
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
   percent_source_rows_equality: 0.0
   percent_llm_rows_equality: 0.0
-  duration_sql: 2.16
-  duration_llm: 4.21
-  prompt_tokens: 1787
-  completion_tokens: 317
-  total_tokens: 2104
-  cost_input_EUR: 0.004468
-  cost_output_EUR: 0.00317
-  cost_total_EUR: 0.007638
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 18
@@ -1025,41 +765,28 @@ questions:
         CAST(100.0 * num_orders / SUM(num_orders) OVER (PARTITION BY region_id, order_year) AS decimal(6,2)) AS pct_of_total
     FROM region_year_seg
     ORDER BY region_name, order_year, pct_of_total DESC;
-  llm_sql_query: |-
-    SELECT
-        r.r_regionkey AS region_id,
-        r.r_name AS region_name,
-        YEAR(o.o_orderdate) AS order_year,
-        c.c_mktsegment AS market_segment,
-        COUNT(o.o_orderkey) AS total_orders,
-        CAST(100.0 * COUNT(o.o_orderkey) / SUM(COUNT(o.o_orderkey)) OVER (PARTITION BY r.r_regionkey, YEAR(o.o_orderdate)) AS DECIMAL(5,2)) AS percent_of_total
-    FROM region r
-    JOIN nation n ON n.n_regionkey = r.r_regionkey
-    JOIN customer c ON c.c_nationkey = n.n_nationkey
-    JOIN orders o ON o.o_custkey = c.c_custkey
-    GROUP BY r.r_regionkey, r.r_name, YEAR(o.o_orderdate), c.c_mktsegment
-    ORDER BY r.r_regionkey, YEAR(o.o_orderdate), percent_of_total DESC;
+  llm_sql_query: ''
   tables_used:
   - region
   - nation
   - customer
   - orders
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 122
-  columns: 6
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 2.63
-  duration_llm: 3.03
-  prompt_tokens: 1754
-  completion_tokens: 194
-  total_tokens: 1948
-  cost_input_EUR: 0.004385
-  cost_output_EUR: 0.00194
-  cost_total_EUR: 0.006325
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 19
@@ -1110,25 +837,7 @@ questions:
     FROM ranked
     WHERE ranking <= 3
     ORDER BY nation_name, order_year, ranking;
-  llm_sql_query: |-
-    SELECT
-        n.n_nationkey AS nation_id,
-        n.n_name AS nation_name,
-        YEAR(o.o_orderdate) AS order_year,
-        s.s_suppkey AS supplier_id,
-        s.s_name AS supplier_name,
-        SUM(l.l_quantity) AS total_quantity,
-        DENSE_RANK() OVER (PARTITION BY n.n_nationkey, YEAR(o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) AS ranking
-    FROM region r
-    JOIN nation n ON r.r_regionkey = n.n_regionkey
-    JOIN customer c ON n.n_nationkey = c.c_nationkey
-    JOIN orders o ON c.c_custkey = o.o_custkey
-    JOIN lineitem l ON o.o_orderkey = l.l_orderkey
-    JOIN supplier s ON l.l_suppkey = s.s_suppkey
-    WHERE r.r_name = 'EUROPE'
-    GROUP BY n.n_nationkey, n.n_name, YEAR(o.o_orderdate), s.s_suppkey, s.s_name
-    HAVING DENSE_RANK() OVER(PARTITION BY n.n_nationkey, YEAR(o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) <= 3
-    ORDER BY n.n_name, order_year, ranking;
+  llm_sql_query: ''
   tables_used:
   - supplier
   - nation
@@ -1145,13 +854,13 @@ questions:
   percent_source_rows_equality: 0.0
   percent_llm_rows_equality: 0.0
   duration_sql: 0
-  duration_llm: 3.14
-  prompt_tokens: 2204
-  completion_tokens: 262
-  total_tokens: 2466
-  cost_input_EUR: 0.00551
-  cost_output_EUR: 0.00262
-  cost_total_EUR: 0.00813
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0
 - iteration: ''
   model_name: ''
   question_number: 20
@@ -1182,40 +891,26 @@ questions:
     FROM price_data
     GROUP BY part_type, order_year, order_quarter
     ORDER BY part_type, order_year, order_quarter;
-  llm_sql_query: |-
-    SELECT
-        p.p_type AS part_type,
-        YEAR(o.o_orderdate) AS order_year,
-        DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
-        COUNT(*) AS num_orders,
-        ROUND(STDEV(o.o_totalprice), 4) AS price_stddev
-    FROM orders o
-    JOIN customer c ON o.o_custkey = c.c_custkey
-    JOIN lineitem l ON o.o_orderkey = l.l_orderkey
-    JOIN part p ON l.l_partkey = p.p_partkey
-    JOIN nation n ON c.c_nationkey = n.n_nationkey
-    WHERE n.n_name = 'JAPAN'
-    GROUP BY p.p_type, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
-    ORDER BY p.p_type ASC, YEAR(o.o_orderdate) ASC, DATEPART(QUARTER, o.o_orderdate) ASC;
+  llm_sql_query: ''
   tables_used:
   - orders
   - lineitem
   - part
   - customer
   - nation
-  executed: true
+  executed: false
   llm_sql_query_changed: false
-  rows: 1501
-  columns: 5
-  percent_rows_equality: 1.0
-  percent_columns_equality: 1.0
-  percent_source_rows_equality: 1.0
-  percent_llm_rows_equality: 1.0
-  duration_sql: 4.23
-  duration_llm: 3.03
-  prompt_tokens: 2193
-  completion_tokens: 192
-  total_tokens: 2385
-  cost_input_EUR: 0.005483
-  cost_output_EUR: 0.00192
-  cost_total_EUR: 0.007403
+  rows: 0
+  columns: 0
+  percent_rows_equality: 0.0
+  percent_columns_equality: 0.0
+  percent_source_rows_equality: 0.0
+  percent_llm_rows_equality: 0.0
+  duration_sql: 0
+  duration_llm: 0
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  cost_input_EUR: 0.0
+  cost_output_EUR: 0.0
+  cost_total_EUR: 0.0

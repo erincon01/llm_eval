@@ -13,9 +13,48 @@ This project is designed to evaluate the performance of various Large Language M
 
 ## Roadmap
 
-- general classes review and refactor.
-- general devops practices:
-  - add pre-commit hooks.
+* General class review and refactor.
+* General DevOps practices:
+
+  * Add pre-commit hooks.
+
+    1. **Install and configure pre-commit via Poetry**:
+
+       ```bash
+       poetry add --dev pre-commit
+       ```
+    2. **Create a `.pre-commit-config.yaml` file** at the project root:
+
+       ```yaml
+       # .pre-commit-config.yaml
+       repos:
+         - repo: https://github.com/psf/black
+           rev: 24.3.0
+           hooks:
+             - id: black
+
+         - repo: https://github.com/pycqa/flake8
+           rev: 6.1.0
+           hooks:
+             - id: flake8
+               args: [--max-line-length=120]
+
+         - repo: https://github.com/PyCQA/isort
+           rev: 5.12.0
+           hooks:
+             - id: isort
+       ```
+    3. **Install the Git hooks**:
+
+       ```bash
+       poetry run pre-commit install
+       ```
+    4. **Run all hooks against all files**:
+
+       ```bash
+       poetry run pre-commit run --all-files
+       ```
+
   - add type checking with mypy.
   - add unit tests.
   - add integration tests.
@@ -29,7 +68,35 @@ This project is designed to evaluate the performance of various Large Language M
   - comparison is sensible when the data row value is not exactly the same (for example: 9.0122 vs 9.0123 are different but 0 equality weight is given).
 - facade app based on streamlit or similar with useful charts.
 - support for more SQL Engines (PostgreSQL, Microsoft Fabric, Databricks, Snowflake, MySQL, etc.).
+## Using Poetry
 
+Poetry is used to manage project dependencies and scripts:
+
+* **Install project dependencies**:
+
+  ```bash
+  poetry install
+  ```
+* **Activate the virtual environment**:
+
+  ```bash
+  poetry shell
+  ```
+* **Run commands or scripts**:
+
+  ```bash
+  poetry run python main.py
+  ```
+* **Run unit tests**:
+
+  ```bash
+  poetry run pytest
+  ```
+* **Generate test coverage report**:
+
+  ```bash
+  poetry run coverage run -m pytest && poetry run coverage report
+  ```
 ## The process
 
 - Given a set of questions (`01-questions.yaml`),

@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "llm-eval"
+version = "0.1.0"
+description = "Evaluation of LLMs using custom criteria"
+authors = [
+    "Eladio Rincón Herrera <eladio@example.com>",
+    "Pablo Gomez Cruañes <pablo@example.com>",
+    "Mihai Stinga <mihai@example.com>"
+]
+license = "MIT"
+readme = "README.md"
+
+packages = [
+  { include = "core", from = "src" },
+  { include = "utils", from = "src" },
+  { include = "data", from= "src"},
+  { include = "services", from = "src"}
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+langfuse = "3.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+flake8 = "^6.1.0"
+isort = "^5.12.0"
+pre-commit = "^3.7.0"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.flake8]
+max-line-length = 120
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

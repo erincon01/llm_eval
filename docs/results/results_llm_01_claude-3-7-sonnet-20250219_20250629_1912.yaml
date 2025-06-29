@@ -1,6 +1,6 @@
 questions:
-- iteration: ''
-  model_name: ''
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 1
   user_question: |
     Which customers from the 'BUILDING' market segment placed more than 10 orders in 1996? Order by total order value descending.
@@ -17,28 +17,39 @@ questions:
     GROUP BY c.c_custkey, c.c_name
     HAVING COUNT(o.o_orderkey) > 10
     ORDER BY total_amount DESC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        COUNT(*) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM customer c
+    JOIN orders o ON o.o_custkey = c.c_custkey
+    WHERE c.c_mktsegment = 'BUILDING'
+      AND o.o_orderdate BETWEEN '1996-01-01' AND '1996-12-31'
+    GROUP BY c.c_custkey, c.c_name
+    HAVING COUNT(*) > 10
+    ORDER BY total_amount DESC;
   tables_used:
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 4
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.62
+  duration_llm: 4.22
+  prompt_tokens: 2046
+  completion_tokens: 154
+  total_tokens: 2200
+  cost_input_EUR: 0.006138
+  cost_output_EUR: 0.00231
+  cost_total_EUR: 0.008448
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 2
   user_question: |
     For each region, what is the average supplier account balance and how many suppliers are in each region? Order by average balance descending.
@@ -53,29 +64,38 @@ questions:
     JOIN supplier s ON n.n_nationkey = s.s_nationkey
     GROUP BY r.r_regionkey, r.r_name
     ORDER BY avg_balance DESC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        r.r_regionkey AS region_id,
+        r.r_name AS region_name,
+        AVG(s.s_acctbal) AS avg_supplier_balance,
+        COUNT(DISTINCT s.s_suppkey) AS num_suppliers
+    FROM region r
+    INNER JOIN nation n ON n.n_regionkey = r.r_regionkey
+    INNER JOIN supplier s ON s.s_nationkey = n.n_nationkey
+    GROUP BY r.r_regionkey, r.r_name
+    ORDER BY avg_supplier_balance DESC;
   tables_used:
   - region
   - nation
   - supplier
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 5
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.32
+  duration_llm: 3.16
+  prompt_tokens: 1935
+  completion_tokens: 135
+  total_tokens: 2070
+  cost_input_EUR: 0.005805
+  cost_output_EUR: 0.002025
+  cost_total_EUR: 0.00783
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 3
   user_question: |
     List the top 5 parts by total quantity ordered across all years. Order by total quantity descending.
@@ -89,28 +109,35 @@ questions:
     GROUP BY p.p_partkey, p.p_name
     ORDER BY total_quantity DESC
     OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT TOP 5
+        p.p_partkey AS part_id,
+        p.p_name AS part_name,
+        SUM(l.l_quantity) AS total_quantity
+    FROM part p
+    INNER JOIN lineitem l ON p.p_partkey = l.l_partkey
+    GROUP BY p.p_partkey, p.p_name
+    ORDER BY total_quantity DESC;
   tables_used:
   - part
   - lineitem
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 5
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 8.09
+  duration_llm: 3.01
+  prompt_tokens: 2284
+  completion_tokens: 95
+  total_tokens: 2379
+  cost_input_EUR: 0.006852
+  cost_output_EUR: 0.001425
+  cost_total_EUR: 0.008277
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 4
   user_question: |
     For each year from 1992 to 1994, identify the top 5 parts by total quantity ordered for customers from the region of ASIA. Order by year and total quantity descending.
@@ -143,31 +170,47 @@ questions:
     FROM yearly_totals
     WHERE rn <= 5
     ORDER BY order_year, total_quantity DESC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        p.p_partkey AS part_id,
+        p.p_name AS part_name,
+        SUM(l.l_quantity) AS total_quantity
+    FROM lineitem l
+    JOIN orders o ON l.l_orderkey = o.o_orderkey
+    JOIN customer c ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    JOIN part p ON l.l_partkey = p.p_partkey
+    WHERE r.r_name = 'ASIA'
+        AND o.o_orderdate BETWEEN '1992-01-01' AND '1994-12-31'
+    GROUP BY YEAR(o.o_orderdate), p.p_partkey, p.p_name
+    ORDER BY order_year, total_quantity DESC
+    OFFSET 0 ROWS
+    FETCH NEXT 15 ROWS ONLY;
   tables_used:
   - part
   - lineitem
   - orders
   - customer
   - nation
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 15
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 0.33
+  duration_sql: 4.83
+  duration_llm: 4.13
+  prompt_tokens: 2676
+  completion_tokens: 254
+  total_tokens: 2930
+  cost_input_EUR: 0.008028
+  cost_output_EUR: 0.00381
+  cost_total_EUR: 0.011838
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 5
   user_question: |
     For orders placed in 1994, how many unique suppliers provided parts of type 'SMALL PLATED STEEL' and size 4,
@@ -188,31 +231,53 @@ questions:
       AND p.p_type = 'SMALL PLATED STEEL'
     GROUP BY l.l_suppkey, s.s_name
     ORDER BY s.s_name ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        s.s_suppkey AS supplier_id,
+        s.s_name AS supplier_name,
+        COUNT(DISTINCT s.s_suppkey) AS num_suppliers,
+        SUM(ps.ps_supplycost * ps.ps_availqty) / SUM(ps.ps_availqty) AS weighted_avg_supply_cost
+    FROM
+        supplier s
+    JOIN
+        partsupp ps ON s.s_suppkey = ps.ps_suppkey
+    JOIN
+        part p ON ps.ps_partkey = p.p_partkey
+    JOIN
+        lineitem l ON l.l_suppkey = s.s_suppkey AND l.l_partkey = p.p_partkey
+    JOIN
+        orders o ON l.l_orderkey = o.o_orderkey
+    WHERE
+        o.o_orderdate BETWEEN '1994-01-01' AND '1994-12-31'
+        AND p.p_type = 'SMALL PLATED STEEL'
+        AND p.p_size = 4
+    GROUP BY
+        s.s_suppkey, s.s_name
+    ORDER BY
+        s.s_suppkey;
   tables_used:
   - orders
   - lineitem
   - partsupp
   - part
   - supplier
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 123
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 0.75
+  datasets_equality: 0.0
+  duration_sql: 3.17
+  duration_llm: 4.65
+  prompt_tokens: 2698
+  completion_tokens: 287
+  total_tokens: 2985
+  cost_input_EUR: 0.008094
+  cost_output_EUR: 0.004305
+  cost_total_EUR: 0.012399
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 6
   user_question: |
     List the top 10 suppliers from GERMANY that supplied parts of type 'SMALL PLATED STEEL' and size 4.
@@ -233,30 +298,42 @@ questions:
     GROUP BY s.s_suppkey, s.s_name
     ORDER BY total_cost DESC
     OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT TOP 10
+        s.s_suppkey AS supplier_id,
+        s.s_name AS supplier_name,
+        SUM(ps.ps_supplycost * ps.ps_availqty) AS total_supply_cost
+    FROM supplier s
+    INNER JOIN nation n ON s.s_nationkey = n.n_nationkey
+    INNER JOIN partsupp ps ON s.s_suppkey = ps.ps_suppkey
+    INNER JOIN part p ON ps.ps_partkey = p.p_partkey
+    WHERE n.n_name = 'GERMANY'
+        AND p.p_type = 'SMALL PLATED STEEL'
+        AND p.p_size = 4
+    GROUP BY s.s_suppkey, s.s_name
+    ORDER BY total_supply_cost DESC;
   tables_used:
   - supplier
   - partsupp
   - nation
   - part
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 10
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 0.67
+  datasets_equality: 0.0
+  duration_sql: 1.65
+  duration_llm: 5.09
+  prompt_tokens: 2137
+  completion_tokens: 193
+  total_tokens: 2330
+  cost_input_EUR: 0.006411
+  cost_output_EUR: 0.002895
+  cost_total_EUR: 0.009306
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 7
   user_question: |
     Find the average order price (rounded to 2 decimals) and the total number of orders per year between 1992 and 1998, inclusive.
@@ -271,27 +348,34 @@ questions:
     WHERE YEAR(o_orderdate) BETWEEN 1992 AND 1998
     GROUP BY YEAR(o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        COUNT(*) AS num_orders,
+        ROUND(AVG(o.o_totalprice), 2) AS avg_price
+    FROM orders o
+    WHERE o.o_orderdate BETWEEN '1992-01-01' AND '1998-12-31'
+    GROUP BY YEAR(o.o_orderdate)
+    ORDER BY order_year ASC;
   tables_used:
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 7
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 2.06
+  duration_llm: 3.37
+  prompt_tokens: 1968
+  completion_tokens: 107
+  total_tokens: 2075
+  cost_input_EUR: 0.005904
+  cost_output_EUR: 0.001605
+  cost_total_EUR: 0.007509
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 8
   user_question: |
     Which three nations had the highest total order amount in 1997? Also return the number of orders per nation.
@@ -309,29 +393,39 @@ questions:
     GROUP BY n.n_nationkey, n.n_name
     ORDER BY total_amount DESC
     OFFSET 0 ROWS FETCH NEXT 3 ROWS ONLY;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT TOP 3
+        n.n_nationkey AS nation_id,
+        n.n_name AS nation_name,
+        COUNT(*) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM nation n
+    JOIN customer c ON c.c_nationkey = n.n_nationkey
+    JOIN orders o ON o.o_custkey = c.c_custkey
+    WHERE o.o_orderdate BETWEEN '1997-01-01' AND '1997-12-31'
+    GROUP BY n.n_nationkey, n.n_name
+    ORDER BY total_amount DESC;
   tables_used:
   - nation
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 3
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.76
+  duration_llm: 3.68
+  prompt_tokens: 2113
+  completion_tokens: 149
+  total_tokens: 2262
+  cost_input_EUR: 0.006339
+  cost_output_EUR: 0.002235
+  cost_total_EUR: 0.008574
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 9
   user_question: |
     For each year, list the number of sales and the total amount for items ordered in December for customers based in the region of EUROPE whose market segment is 'AUTOMOBILE', ordered by year ascending.
@@ -349,30 +443,42 @@ questions:
       AND MONTH(o.o_orderdate) = 12
     GROUP BY YEAR(o.o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        COUNT(*) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM orders o
+    JOIN customer c ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'EUROPE'
+        AND c.c_mktsegment = 'AUTOMOBILE'
+        AND MONTH(o.o_orderdate) = 12
+    GROUP BY YEAR(o.o_orderdate)
+    ORDER BY order_year ASC;
   tables_used:
   - orders
   - customer
   - nation
   - region
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 4
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 2.01
+  duration_llm: 3.06
+  prompt_tokens: 2162
+  completion_tokens: 174
+  total_tokens: 2336
+  cost_input_EUR: 0.006486
+  cost_output_EUR: 0.00261
+  cost_total_EUR: 0.009096
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 10
   user_question: |
     List customer data and his account balance for customers that have placed more than 10 orders and whose individual account balance is greater than 6000.
@@ -388,28 +494,38 @@ questions:
     GROUP BY c.c_custkey, c.c_name, c.c_acctbal
     HAVING COUNT(o.o_orderkey) > 10 AND c.c_acctbal > 6000
     ORDER BY customer_name ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        c.c_acctbal AS account_balance,
+        COUNT(*) AS num_orders
+    FROM customer c
+    JOIN orders o ON o.o_custkey = c.c_custkey
+    WHERE c.c_acctbal > 6000
+    GROUP BY c.c_custkey, c.c_name, c.c_acctbal
+    HAVING COUNT(*) > 10
+    ORDER BY c.c_name;
   tables_used:
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 19
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 2.65
+  duration_llm: 2.47
+  prompt_tokens: 2063
+  completion_tokens: 128
+  total_tokens: 2191
+  cost_input_EUR: 0.006189
+  cost_output_EUR: 0.00192
+  cost_total_EUR: 0.008109
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 11
   user_question: |
     Which part types are most commonly sold by quantity, and how many units have been sold for each?
@@ -423,28 +539,34 @@ questions:
     GROUP BY p.p_type
     ORDER BY total_quantity DESC
     OFFSET 0 ROWS FETCH NEXT 15 ROWS ONLY;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT TOP 15
+        p.p_type AS part_type,
+        SUM(l.l_quantity) AS total_quantity
+    FROM part p
+    INNER JOIN lineitem l ON p.p_partkey = l.l_partkey
+    GROUP BY p.p_type
+    ORDER BY total_quantity DESC;
   tables_used:
   - part
   - lineitem
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 15
+  columns: 2
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 6.19
+  duration_llm: 1.77
+  prompt_tokens: 2303
+  completion_tokens: 75
+  total_tokens: 2378
+  cost_input_EUR: 0.006909
+  cost_output_EUR: 0.001125
+  cost_total_EUR: 0.008034
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 12
   user_question: |
     How many orders had a total price above 100000 and were placed before 1995 per year?
@@ -458,27 +580,34 @@ questions:
       AND o_orderdate < '1995-01-01'
     GROUP BY YEAR(o_orderdate)
     ORDER BY order_year ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        COUNT(*) AS num_orders
+    FROM orders o
+    WHERE o.o_totalprice > 100000
+        AND o.o_orderdate < '1995-01-01'
+    GROUP BY YEAR(o.o_orderdate)
+    ORDER BY order_year ASC;
   tables_used:
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 3
+  columns: 2
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.48
+  duration_llm: 2.16
+  prompt_tokens: 1939
+  completion_tokens: 87
+  total_tokens: 2026
+  cost_input_EUR: 0.005817
+  cost_output_EUR: 0.001305
+  cost_total_EUR: 0.007122
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 13
   user_question: |
     Which customers placed orders in both 1994 and 1995?
@@ -496,28 +625,45 @@ questions:
     HAVING SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
        AND SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
     ORDER BY customer_name ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) AS num_orders_1994,
+        SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) AS num_orders_1995
+    FROM
+        customer c
+    JOIN
+        orders o ON c.c_custkey = o.o_custkey
+    WHERE
+        o.o_orderdate BETWEEN '1994-01-01' AND '1995-12-31'
+    GROUP BY
+        c.c_custkey, c.c_name
+    HAVING
+        SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
+        AND SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
+    ORDER BY
+        customer_name ASC;
   tables_used:
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 6
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.34
+  duration_llm: 4.5
+  prompt_tokens: 2069
+  completion_tokens: 288
+  total_tokens: 2357
+  cost_input_EUR: 0.006207
+  cost_output_EUR: 0.00432
+  cost_total_EUR: 0.010527
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 14
   user_question: |
     How many orders have been made per month in year 1992 by customers in AMERICA?
@@ -535,30 +681,41 @@ questions:
       AND YEAR(o.o_orderdate) = 1992
     GROUP BY YEAR(o.o_orderdate), MONTH(o.o_orderdate)
     ORDER BY order_month ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        MONTH(o.o_orderdate) AS order_month,
+        COUNT(*) AS num_orders
+    FROM orders o
+    JOIN customer c ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'AMERICA'
+    AND o.o_orderdate BETWEEN '1992-01-01' AND '1992-12-31'
+    GROUP BY YEAR(o.o_orderdate), MONTH(o.o_orderdate)
+    ORDER BY order_year, order_month;
   tables_used:
   - orders
   - customer
   - nation
   - region
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 3
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.53
+  duration_llm: 2.87
+  prompt_tokens: 2151
+  completion_tokens: 180
+  total_tokens: 2331
+  cost_input_EUR: 0.006453
+  cost_output_EUR: 0.0027
+  cost_total_EUR: 0.009153
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 15
   user_question: |
     Show the number of orders per year between 1992 and 1995, with one column per each 3-letter month abbreviation (e.g., Jan, Feb, Mar) ordered by year ascending.
@@ -579,27 +736,45 @@ questions:
                             [Jul], [Aug], [Sep], [Oct], [Nov], [Dec])
     ) AS pivot_table
     ORDER BY order_year ASC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        DATEPART(YEAR, o.o_orderdate) AS order_year,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 1 THEN 1 ELSE 0 END) AS Jan,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 2 THEN 1 ELSE 0 END) AS Feb,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 3 THEN 1 ELSE 0 END) AS Mar,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 4 THEN 1 ELSE 0 END) AS Apr,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 5 THEN 1 ELSE 0 END) AS May,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 6 THEN 1 ELSE 0 END) AS Jun,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 7 THEN 1 ELSE 0 END) AS Jul,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 8 THEN 1 ELSE 0 END) AS Aug,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 9 THEN 1 ELSE 0 END) AS Sep,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 10 THEN 1 ELSE 0 END) AS Oct,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 11 THEN 1 ELSE 0 END) AS Nov,
+        SUM(CASE WHEN DATEPART(MONTH, o.o_orderdate) = 12 THEN 1 ELSE 0 END) AS Dec,
+        COUNT(*) AS num_orders
+    FROM orders o
+    WHERE o.o_orderdate BETWEEN '1992-01-01' AND '1995-12-31'
+    GROUP BY DATEPART(YEAR, o.o_orderdate)
+    ORDER BY order_year ASC;
   tables_used:
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 4
+  columns: 14
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 3.05
+  duration_llm: 7.12
+  prompt_tokens: 1944
+  completion_tokens: 596
+  total_tokens: 2540
+  cost_input_EUR: 0.005832
+  cost_output_EUR: 0.00894
+  cost_total_EUR: 0.014772
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 16
   user_question: |
     For each customer located in the UNITED KINGDOM, compare their total spending in each quarter with the same quarter of the previous year.
@@ -648,7 +823,22 @@ questions:
     WHERE prev_year_amount IS NOT NULL
       AND (total_amount - prev_year_amount) > 0
     ORDER BY yoy_percent_change DESC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT TOP 20
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        YEAR(o.o_orderdate) AS order_year,
+        DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
+        SUM(o.o_totalprice) AS total_amount,
+        ROUND(100.0 * (SUM(o.o_totalprice) - LAG(SUM(o.o_totalprice), 4) OVER (PARTITION BY c.c_custkey, DATEPART(QUARTER, o.o_orderdate) ORDER BY YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate))) / NULLIF(LAG(SUM(o.o_totalprice), 4) OVER (PARTITION BY c.c_custkey, DATEPART(QUARTER, o.o_orderdate) ORDER BY YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)), 0), 2) AS yoy_percent_change
+    FROM customer c
+    JOIN orders o ON c.c_custkey = o.o_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    WHERE n.n_name = 'UNITED KINGDOM'
+    GROUP BY c.c_custkey, c.c_name, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
+    HAVING LAG(SUM(o.o_totalprice), 4) OVER (PARTITION BY c.c_custkey, DATEPART(QUARTER, o.o_orderdate) ORDER BY YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)) IS NOT NULL
+       AND (SUM(o.o_totalprice) - LAG(SUM(o.o_totalprice), 4) OVER (PARTITION BY c.c_custkey, DATEPART(QUARTER, o.o_orderdate) ORDER BY YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate))) > 0
+    ORDER BY yoy_percent_change DESC;
   tables_used:
   - customer
   - orders
@@ -657,20 +847,19 @@ questions:
   llm_sql_query_changed: false
   rows: 0
   columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
+  rows_equality: 0.0
+  columns_equality: 0.0
+  datasets_equality: 0.0
   duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  duration_llm: 6.95
+  prompt_tokens: 2162
+  completion_tokens: 540
+  total_tokens: 2702
+  cost_input_EUR: 0.006486
+  cost_output_EUR: 0.0081
+  cost_total_EUR: 0.014586
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 17
   user_question: |
     Create a quarterly revenue pivot per region with columns Q1 through Q4, then calculate the absolute difference in revenue versus the previous quarter using LAG Function.
@@ -714,30 +903,44 @@ questions:
         total_amount - prev_q_amount AS delta_vs_prev_q
     FROM lag_calc
     ORDER BY region_name, order_year, order_quarter;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        r.r_regionkey AS region_id,
+        r.r_name AS region_name,
+        YEAR(o.o_orderdate) AS order_year,
+        DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
+        SUM(o.o_totalprice) AS total_amount,
+        SUM(o.o_totalprice) - LAG(SUM(o.o_totalprice), 1, NULL) OVER (PARTITION BY r.r_regionkey ORDER BY YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)) AS delta_vs_prev_q
+    FROM customer c
+    JOIN orders o ON o.o_custkey = c.c_custkey
+    JOIN nation n ON n.n_nationkey = c.c_nationkey
+    JOIN region r ON r.r_regionkey = n.n_regionkey
+    WHERE o.o_orderdate BETWEEN '1995-01-01' AND '1997-12-31'
+    AND r.r_name IN ('EUROPE', 'AMERICA')
+    GROUP BY r.r_regionkey, r.r_name, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
+    ORDER BY r.r_regionkey, order_year, order_quarter;
   tables_used:
   - region
   - nation
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 16
+  columns: 6
+  rows_equality: 1.0
+  columns_equality: 0.83
+  datasets_equality: 0.0
+  duration_sql: 2.3
+  duration_llm: 5.89
+  prompt_tokens: 2210
+  completion_tokens: 325
+  total_tokens: 2535
+  cost_input_EUR: 0.00663
+  cost_output_EUR: 0.004875
+  cost_total_EUR: 0.011505
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 18
   user_question: |
     For each region and year, determine the percentage contribution with 2 decimals of every market segment to the total number of orders.
@@ -765,30 +968,42 @@ questions:
         CAST(100.0 * num_orders / SUM(num_orders) OVER (PARTITION BY region_id, order_year) AS decimal(6,2)) AS pct_of_total
     FROM region_year_seg
     ORDER BY region_name, order_year, pct_of_total DESC;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        r.r_regionkey AS region_id,
+        r.r_name AS region_name,
+        YEAR(o.o_orderdate) AS order_year,
+        c.c_mktsegment AS market_segment,
+        COUNT(*) AS num_orders,
+        CAST(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY r.r_regionkey, YEAR(o.o_orderdate)) AS DECIMAL(10,2)) AS pct_of_total
+    FROM customer c
+    JOIN orders o ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    GROUP BY r.r_regionkey, r.r_name, YEAR(o.o_orderdate), c.c_mktsegment
+    ORDER BY region_id, order_year, pct_of_total DESC;
   tables_used:
   - region
   - nation
   - customer
   - orders
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  rows: 122
+  columns: 6
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 2.89
+  duration_llm: 3.67
+  prompt_tokens: 2177
+  completion_tokens: 240
+  total_tokens: 2417
+  cost_input_EUR: 0.006531
+  cost_output_EUR: 0.0036
+  cost_total_EUR: 0.010131
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 19
   user_question: |
     For each nation in the region of EUROPE, and for each year based on the order date, find the top 3 suppliers by total quantity supplied.
@@ -837,7 +1052,23 @@ questions:
     FROM ranked
     WHERE ranking <= 3
     ORDER BY nation_name, order_year, ranking;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        n.n_name AS nation_name,
+        s.s_suppkey AS supplier_id,
+        s.s_name AS supplier_name,
+        YEAR(o.o_orderdate) AS order_year,
+        SUM(l.l_quantity) AS total_quantity,
+        DENSE_RANK() OVER (PARTITION BY n.n_name, YEAR(o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) AS supplier_rank
+    FROM supplier s
+    JOIN nation n ON s.s_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    JOIN lineitem l ON s.s_suppkey = l.l_suppkey
+    JOIN orders o ON l.l_orderkey = o.o_orderkey
+    WHERE r.r_name = 'EUROPE'
+    GROUP BY n.n_name, s.s_suppkey, s.s_name, YEAR(o.o_orderdate)
+    HAVING DENSE_RANK() OVER (PARTITION BY n.n_name, YEAR(o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) <= 3
+    ORDER BY nation_name, order_year, supplier_rank;
   tables_used:
   - supplier
   - nation
@@ -849,20 +1080,19 @@ questions:
   llm_sql_query_changed: false
   rows: 0
   columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
+  rows_equality: 0.0
+  columns_equality: 0.0
+  datasets_equality: 0.0
   duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
-- iteration: ''
-  model_name: ''
+  duration_llm: 6.01
+  prompt_tokens: 2717
+  completion_tokens: 306
+  total_tokens: 3023
+  cost_input_EUR: 0.008151
+  cost_output_EUR: 0.00459
+  cost_total_EUR: 0.012741
+- iteration: '01'
+  model_name: claude-3-7-sonnet-20250219
   question_number: 20
   user_question: |
     Monitor price variability by calculating the standard deviation with 4 decimals of order prices for each part type, year, and quarter.
@@ -891,26 +1121,39 @@ questions:
     FROM price_data
     GROUP BY part_type, order_year, order_quarter
     ORDER BY part_type, order_year, order_quarter;
-  llm_sql_query: ''
+  llm_sql_query: |-
+    SELECT
+        p.p_type AS part_type,
+        YEAR(o.o_orderdate) AS order_year,
+        DATEPART(QUARTER, o.o_orderdate) AS order_quarter,
+        COUNT(*) AS num_orders,
+        ROUND(STDEV(o.o_totalprice), 4) AS price_stddev
+    FROM part p
+    JOIN lineitem l ON l.l_partkey = p.p_partkey
+    JOIN orders o ON o.o_orderkey = l.l_orderkey
+    JOIN customer c ON c.c_custkey = o.o_custkey
+    JOIN nation n ON n.n_nationkey = c.c_nationkey
+    WHERE n.n_name = 'JAPAN'
+    GROUP BY p.p_type, YEAR(o.o_orderdate), DATEPART(QUARTER, o.o_orderdate)
+    ORDER BY part_type, order_year, order_quarter;
   tables_used:
   - orders
   - lineitem
   - part
   - customer
   - nation
-  executed: false
+  executed: true
   llm_sql_query_changed: false
-  rows: 0
-  columns: 0
-  percent_rows_equality: 0.0
-  percent_columns_equality: 0.0
-  percent_source_rows_equality: 0.0
-  percent_llm_rows_equality: 0.0
-  duration_sql: 0
-  duration_llm: 0
-  prompt_tokens: 0
-  completion_tokens: 0
-  total_tokens: 0
-  cost_input_EUR: 0.0
-  cost_output_EUR: 0.0
-  cost_total_EUR: 0.0
+  rows: 1501
+  columns: 5
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 4.48
+  duration_llm: 4.23
+  prompt_tokens: 2705
+  completion_tokens: 227
+  total_tokens: 2932
+  cost_input_EUR: 0.008115
+  cost_output_EUR: 0.003405
+  cost_total_EUR: 0.01152

@@ -25,6 +25,7 @@ class ModelEvaluator:
         file_name_prefix,
         log_results=True,
         log_summary=True,
+        iteration="",
     ):
         """
         Iterate each model and execute each sql question.
@@ -41,6 +42,7 @@ class ModelEvaluator:
         :param file_name_prefix: Prefix for the generated files.
         :param log_results: If True, the results will be saved to YAML files.
         :param log_summary: If True, a summary file will be created with the results.
+        :param iteration: Iteration identifier.
         :return: files_generated: List of generated files,
                 summary_text: Summary of the processing with the model.
         """
@@ -75,8 +77,7 @@ class ModelEvaluator:
 
             row_header = (
                 "Timestamp\tQuestion\tModel\tLLM_time\tSQL_time\tRows\tColumns\t"
-                "Percent_rows_equality\tPercent_columns_equality\t"
-                "Percent_source_rows_equality\tPercent_llm_rows_equality\t"
+                "Rows_equality\tColumns_equality\tDatasets_equality\t"
                 "Total_tokens\tPrompt_tokens\tCompletion_tokens\t"
                 "Cost_total_EUR\tCost_input_tokens_EUR\tCost_output_tokens_EUR\n"
             )
@@ -93,8 +94,6 @@ class ModelEvaluator:
 
         for model in models:
 
-            print(f"\nProcessing questions with model {model}, temperature {temperature}")
-
             model_id = model["id"]
             if model_id is None or model_id == "":
                 raise ValueError(f"Model {model_id} not found in the variable model.")
@@ -102,6 +101,8 @@ class ModelEvaluator:
             model_name = model["name"]
             if model_name is None or model_name == "":
                 raise ValueError(f"Model {model_name} not found in the variable model.")
+
+            print(f"\nProcessing questions with model {model_name}, temperature {temperature}")
 
             model_config = next(
                 (cfg for cfg in models_configs if cfg["id"] == model_id),
@@ -120,18 +121,19 @@ class ModelEvaluator:
                 semantic_rules=semantic_rules,
                 temperature=temperature,
                 max_tokens=10000,
+                iteration=iteration,
             )
 
             if log_results:
                 # save the results to a YAML file
-                file_name = f"{results_to_path}/{file_name_prefix}_{model['name']}.yaml"
+                file_name = f"{results_to_path}/{file_name_prefix}_{model['name']}_{d}.yaml"
                 file_name = file_name.replace("//", "/")
                 if os.path.exists(file_name):
                     os.remove(file_name)
                 self.questions_obj.save_questions(yaml_file=file_name)
                 files_generated.append(file_name)
 
-            print(f"Processed questions with model {model}")
+            print(f"Processed questions with model {model_name}")
             print("---")
 
             if log_summary:

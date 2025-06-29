@@ -1,8 +1,6 @@
 models_configs:
-  - id: msdn-corp
+  - id: MSDN_CORP
     enabled: true
-    endpoint: https://erincon01-ai-foundry.services.ai.azure.com
-    api_key: 6HMOJzAqWAxSvS6SVz1RXi7UYfoMGsbvjrj3vFzbD7MbRYkbbBRhJQQJ99BEACYeBjFXJ3w3AAAAACOGwkM2
     models:
       - name: DeepSeek-V3-0324
         cost_input_tokens_EUR_1K:  0.00114
@@ -19,13 +17,11 @@ models_configs:
       - name: grok-3-mini
         cost_input_tokens_EUR_1K:  0.00025
         cost_output_tokens_EUR_1K: 0.00127
-  - id: msdn-alternative
-    enabled: false
-    endpoint: https://eladi-mb2qaohs-eastus2.cognitiveservices.azure.com
-    api_key: 9Z2AMZzNnVH5eYHG2d9Ik0cJu1hMbjWZfzqrHyLjyXMLFVZ8rE4oJQQJ99BEACHYHv6XJ3w3AAAAACOGgYYj
+
+  - id: MSDN_ALT
+    enabled: true
     models:
       - name: Phi-3-medium-128k-instruct
-        enabled: false
         cost_input_tokens_EUR_1K:  0.00015
         cost_output_tokens_EUR_1K: 0.00060
       - name: Phi-3.5-MoE-instruct
@@ -39,10 +35,8 @@ models_configs:
         cost_input_tokens_EUR_1K:  0.00040
         cost_output_tokens_EUR_1K: 0.00160
 
-  - id: azure-erincon
-    enabled: false
-    endpoint: https://erincon01-ps.services.ai.azure.com
-    api_key: 3QFbXCqI2pcJId9iGbYRGbLs6g7Qieun6nN7aZTptbjUWvckaM8FJQQJ99BEACYeBjFXJ3w3AAAAACOGzDs2
+  - id: AZURE_CUSTOM
+    enabled: true
     models:
       - name: Llama-3.3-70B-Instruct
         cost_input_tokens_EUR_1K:  0.00600
@@ -57,10 +51,8 @@ models_configs:
         cost_input_tokens_EUR_1K:  0.00071
         cost_output_tokens_EUR_1K: 0.00071
 
-  - id: antrophic-erincon
-    enabled: false
-    endpoint: https://antrophic.com
-    api_key: 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
+  - id: ANTHROPIC_CUSTOM
+    enabled: true
     models:
       - name: claude-3-5-sonnet-20241022
         cost_input_tokens_EUR_1K:  0.00300

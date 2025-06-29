@@ -100,6 +100,7 @@ class LLMsEvaluator:
         file_name_prefix: str,
         log_results: bool = True,
         log_summary: bool = True,
+        iteration: str = "",
     ) -> str:
         """
         Iterate each model and execute each sql question in self.all_questions.
@@ -117,6 +118,7 @@ class LLMsEvaluator:
             file_name_prefix=file_name_prefix,
             log_results=log_results,
             log_summary=log_summary,
+            iteration=iteration,
         )
 
     def execute_queries(

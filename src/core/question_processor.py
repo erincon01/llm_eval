@@ -29,6 +29,7 @@ class QuestionProcessor:
         semantic_rules,
         temperature,
         max_tokens,
+        iteration,
     ):
         """
         Process each question, generate SQL queries using the LLM,
@@ -43,6 +44,7 @@ class QuestionProcessor:
         :param semantic_rules: Semantic rules content.
         :param temperature: Temperature for the LLM.
         :param max_tokens: Maximum tokens for the LLM.
+        :param iteration: Iteration identifier.
         :return: summary of the processing with the model.
         """
 
@@ -55,6 +57,10 @@ class QuestionProcessor:
         summary_text = []
 
         for question in questions:
+            
+            # Assign iteration and model_name to each question
+            question["iteration"] = iteration
+            question["model_name"] = model.get("name", "")
 
             question_number = question["question_number"]
             user_question = question["user_question"]
@@ -94,10 +100,9 @@ class QuestionProcessor:
             baseline_df = baseline_entry["df"] if baseline_entry else None
 
             (
-                percent_rows_equality,
-                percent_columns_equality,
-                percent_source_rows_equality,
-                percent_llm_rows_equality,
+                rows_equality,
+                columns_equality,
+                datasets_equality,
             ) = DataUtils.compare_dataframes(baseline_df, df, question_number)
 
             duration_llm = round(metadata.get("duration", 0), 2)
@@ -107,10 +112,10 @@ class QuestionProcessor:
             question["executed"] = executed
             question["rows"] = rows
             question["columns"] = columns
-            question["percent_rows_equality"] = percent_rows_equality
-            question["percent_columns_equality"] = percent_columns_equality
-            question["percent_source_rows_equality"] = percent_source_rows_equality
-            question["percent_llm_rows_equality"] = percent_llm_rows_equality
+            
+            question["rows_equality"] = rows_equality
+            question["columns_equality"] = columns_equality
+            question["datasets_equality"] = datasets_equality
 
             question["duration_sql"] = duration_sql
             question["duration_llm"] = duration_llm
@@ -140,19 +145,18 @@ class QuestionProcessor:
             total_queries += 1
 
             print(
-                f"Question #{question_number}: LLM: {duration_llm:.1f} sec(s),"
-                f"SQL: {duration_sql:.1f} sec(s), {rows} row(s) affected,\n"
-                f"    {percent_rows_equality} rows equality, "
-                f"{percent_columns_equality} columns equality,\n"
-                f"    {percent_source_rows_equality} source rows equality, "
-                f"{percent_llm_rows_equality} LLM rows equality..."
+                f"    Question #{question_number:02d}: LLM: {duration_llm:.1f} sec(s), "
+                f"SQL: {duration_sql:.1f} sec(s), {rows} row(s) and {columns} column(s) affected. "
+                f"{rows_equality} rows equality, "
+                f"{columns_equality} columns equality, "
+                f"{datasets_equality} datasets equality."
             )
 
             row_log = (
-                f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{question_number}\t{model}\t"
+                f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{question_number}\t{model.get('name', '')}\t"
                 f"{duration_llm:.1f}\t{duration_sql:.1f}\t{rows}\t{columns}\t"
-                f"{percent_rows_equality}\t{percent_columns_equality}\t"
-                f"{percent_source_rows_equality}\t{percent_llm_rows_equality}\t"
+                f"{rows_equality}\t{columns_equality}\t"
+                f"{datasets_equality}\t"
                 f"{question['total_tokens']}\t{question['prompt_tokens']}\t"
                 f"{question['completion_tokens']}\t{question['cost_total_EUR']}\t"
                 f"{question['cost_input_EUR']}\t{question['cost_output_EUR']}"

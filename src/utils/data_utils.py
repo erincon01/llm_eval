@@ -24,12 +24,11 @@ class DataUtils:
         :return:
             - percent_rows_equality: ratio of number of rows (size-based)
             - percent_columns_equality: ratio of number of columns (size-based)
-            - percent_baseline_covered: how much of baseline data is covered
+            - percent_datasets_equality: how much of baseline data is covered
                 in LLM result
-            - percent_llm_covered: how much of LLM data exists in baseline
         """
         if baseline_df is None or llm_df is None or baseline_df.empty:
-            return 0.00, 0.00, 0.00, 0.00
+            return 0.00, 0.00, 0.00
 
         try:
             # Normalize numeric columns to avoid float/decimal mismatches
@@ -46,8 +45,7 @@ class DataUtils:
             intersection = baseline_set.intersection(llm_set)
 
             # Coverage percentages
-            percent_baseline_covered = round(len(intersection) / len(baseline_set), 2) if baseline_set else 0.0
-            percent_llm_covered = round(len(intersection) / len(llm_set), 2) if llm_set else 0.0
+            percent_datasets_equality = round(len(intersection) / len(baseline_set), 2) if baseline_set else 0.0
 
             # Pure size comparison (not content-aware)
             percent_rows_equality = round(len(llm_df) / len(baseline_df), 2) if len(llm_df) <= len(baseline_df) else 0.0
@@ -60,13 +58,12 @@ class DataUtils:
             return (
                 percent_rows_equality,
                 percent_columns_equality,
-                percent_baseline_covered,
-                percent_llm_covered,
+                percent_datasets_equality,
             )
 
         except Exception as e:
             print(f"[ERROR] Question #{question_number}: comparison failed: {e}")
-            return 0.0, 0.0, 0.0, 0.0
+            return 0.0, 0.0, 0.0
 
     @staticmethod
     def load_baseline_datasets(baseline_path: str):

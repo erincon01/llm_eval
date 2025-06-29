@@ -55,10 +55,9 @@ def performance_report(results_path: str, file_name_prefix: str) -> None:
             "Total_tokens": "total_tokens",
             "Prompt_tokens": "prompt_tokens",
             "Completion_tokens": "completion_tokens",
-            "Percent_rows_equality": "percent_rows_equality",
-            "Percent_columns_equality": "percent_columns_equality",
-            "Percent_source_rows_equality": "percent_source_rows_equality",
-            "Percent_llm_rows_equality": "percent_llm_rows_equality",
+            "Rows_equality": "rows_equality",
+            "Columns_equality": "columns_equality",
+            "Datasets_equality": "datasets_equality",
             "Cost_input_tokens_EUR": "cost_input_tokens_EUR",
             "Cost_output_tokens_EUR": "cost_output_tokens_EUR",
         },
@@ -76,10 +75,9 @@ def performance_report(results_path: str, file_name_prefix: str) -> None:
         "total_tokens",
         "prompt_tokens",
         "completion_tokens",
-        "percent_rows_equality",
-        "percent_columns_equality",
-        "percent_source_rows_equality",
-        "percent_llm_rows_equality",
+        "rows_equality",
+        "columns_equality",
+        "datasets_equality",
         "cost_input_tokens_EUR",
         "cost_output_tokens_EUR",
     ]
@@ -108,8 +106,7 @@ def _generate_model_performance_report(all_data: pd.DataFrame) -> None:
             mean_llm_time=("llm_time", "mean"),
             stdev_llm_time=("llm_time", "std"),
             mean_tokens=("total_tokens", "mean"),
-            mean_source_rows_equality=("percent_source_rows_equality", "mean"),
-            mean_llm_rows_equality=("percent_llm_rows_equality", "mean"),
+            mean_datasets_equality=("datasets_equality", "mean"),
             mean_cost_EUR=("total_cost_tokens_EUR", "mean"),
         )
         .reset_index()
@@ -121,8 +118,7 @@ def _generate_model_performance_report(all_data: pd.DataFrame) -> None:
         "mean_llm_time",
         "stdev_llm_time",
         "mean_tokens",
-        "mean_source_rows_equality",
-        "mean_llm_rows_equality",
+        "mean_datasets_equality",
     ]
     agg[cols_to_round] = agg[cols_to_round].round(2)
     agg["mean_cost_EUR"] = agg["mean_cost_EUR"].round(6)
@@ -138,10 +134,9 @@ def _generate_query_performance_report(all_data: pd.DataFrame) -> None:
         .agg(
             mean_llm_time=("llm_time", "mean"),
             stdev_llm_time=("llm_time", "std"),
-            mean_source_rows_equality=("percent_source_rows_equality", "mean"),
-            mean_llm_rows_equality=("percent_llm_rows_equality", "mean"),
-            mean_rows_equality=("percent_rows_equality", "mean"),
-            mean_columns_equality=("percent_columns_equality", "mean"),
+            mean_rows_equality=("rows_equality", "mean"),
+            mean_columns_equality=("columns_equality", "mean"),
+            mean_datasets_equality=("datasets_equality", "mean"),
         )
         .reset_index()
     )
@@ -149,10 +144,9 @@ def _generate_query_performance_report(all_data: pd.DataFrame) -> None:
     cols_to_round = [
         "mean_llm_time",
         "stdev_llm_time",
-        "mean_source_rows_equality",
-        "mean_llm_rows_equality",
         "mean_rows_equality",
         "mean_columns_equality",
+        "mean_datasets_equality",
     ]
     agg_queries[cols_to_round] = agg_queries[cols_to_round].round(2)
 
@@ -167,7 +161,7 @@ def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
         .agg(
             mean_llm_time=("llm_time", "mean"),
             mean_cost_EUR=("total_cost_tokens_EUR", "mean"),
-            mean_source_rows_equality=("percent_source_rows_equality", "mean"),
+            mean_datasets_equality=("datasets_equality", "mean"),
         )
         .reset_index()
     )
@@ -175,7 +169,7 @@ def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
     # Round values
     agg["mean_llm_time"] = agg["mean_llm_time"].round(2)
     agg["mean_cost_EUR"] = agg["mean_cost_EUR"].round(6)
-    agg["mean_source_rows_equality"] = agg["mean_source_rows_equality"].round(2)
+    agg["mean_datasets_equality"] = agg["mean_datasets_equality"].round(2)
 
     # Best models by LLM time
     best_models = agg.sort_values(by="mean_llm_time")
@@ -202,11 +196,11 @@ def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
     )
 
     # Best models by data quality
-    best_data_rows_equality = agg.sort_values(by="mean_source_rows_equality", ascending=False)
-    print("\nBest models based on average data rows equality:\n")
+    best_data_rows_equality = agg.sort_values(by="mean_datasets_equality", ascending=False)
+    print("\nBest models based on average datasets equality:\n")
     print(
         tabulate.tabulate(
-            best_data_rows_equality[["model", "mean_source_rows_equality"]],
+            best_data_rows_equality[["model", "mean_datasets_equality"]],
             headers="keys",
             tablefmt="pipe",
             showindex=False,
@@ -220,7 +214,7 @@ def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
 def _generate_combined_ranking(agg: pd.DataFrame) -> None:
     """Generate combined ranking based on quality, time, and price."""
     # Create rankings
-    agg["rank_quality"] = agg["mean_source_rows_equality"].rank(method="min", ascending=False).astype(int)
+    agg["rank_quality"] = agg["mean_datasets_equality"].rank(method="min", ascending=False).astype(int)
     agg["rank_price"] = agg["mean_cost_EUR"].rank(method="min", ascending=True).astype(int)
     agg["rank_time"] = agg["mean_llm_time"].rank(method="min", ascending=True).astype(int)
 
@@ -233,7 +227,7 @@ def _generate_combined_ranking(agg: pd.DataFrame) -> None:
     # Add values in parentheses for non-empty rankings
     agg["rank_quality"] = agg.apply(
         lambda row: (
-            f"{row['rank_quality']} ({row['mean_source_rows_equality']})" if row["rank_quality"] != "" else ""
+            f"{row['rank_quality']} ({row['mean_datasets_equality']})" if row["rank_quality"] != "" else ""
         ),
         axis=1,
     )

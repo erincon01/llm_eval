@@ -54,6 +54,7 @@ if __name__ == "__main__":
             file_name_prefix=f"results_llm_{i_str}",
             log_results=True,
             log_summary=True,
+            iteration=i_str,
         )
 
         t = time.time() - t

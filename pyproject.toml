@@ -20,6 +20,11 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 langfuse = "3.0"
+openai = ">=1.0.0"
+python-dotenv = "^1.0"
+pandas = "^2.0"
+sqlalchemy = "^2.0"
+anthropic = "^0.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"

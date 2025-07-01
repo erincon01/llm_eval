@@ -4,11 +4,8 @@ import traceback
 
 # anthropic
 import anthropic
-import tiktoken
 
 # gemini
-from azure.ai.inference import ChatCompletionsClient
-from azure.core.credentials import AzureKeyCredential
 
 # from openai import AzureOpenAI -- previous import statement without langfuse
 from langfuse import get_client, observe
@@ -223,70 +220,8 @@ def get_chat_completion_from_platform(
             return output, metadata_json
 
         except Exception as e:
-            raise RuntimeError(f"Error retrieving chat completion from Azure OpenAI API: {str(e)}") from e
-
-    if platform == "deepseek":
-
-        endpoint = os.getenv("DEEKSEEK_ENDPOINT")
-        api_key = os.getenv("DEEKSEEK_KEY")
-        if model is None:
-            model = os.getenv("DEEKSEEK_MODEL")
-
-        try:
-            client = ChatCompletionsClient(endpoint, AzureKeyCredential(api_key))
-
-            start = time.time()
-
-            response = client.complete(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-                max_tokens=tokens,
-            )
-
-            duration = time.time() - start
-            duration = round(duration, 2)
-
-            output = response.choices[0].message.content
-            output = output.replace("\n\n", "\n").replace("\n\n", "\n")
-
-            # put the metadata in a json object
-            metadata_json = {
-                "total_tokens": 0,
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "duration": duration,
-            }
-
-            if langfuse_enabled:
-                langfuse = get_client()
-                langfuse.update_current_trace(
-                    tags=["deepseek_call", "qa"], metadata={"platform": platform, "model": model}
-                )
-
-            return output, metadata_json
-
-        except Exception as e:
             tb = traceback.format_exc()
             return f"Error retrieving chat completion from DeepSeek API: {str(e)}\n{tb}"
 
     if endpoint is None or api_key is None or model is None:
         raise ValueError("Please set the relevant platform environment variables.")
-
-
-def count_tokens(prompt):
-    """
-    Counts the number of tokens in the given prompt.
-    Parameters:
-    prompt (str): The prompt to count tokens from.
-    Returns:
-    int: The number of tokens in the prompt.
-    """
-
-    encoder = tiktoken.get_encoding("cl100k_base")
-    tokens = encoder.encode(prompt)
-
-    return len(tokens)

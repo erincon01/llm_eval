@@ -2,6 +2,58 @@
 
 A comprehensive Python library for evaluating LLM models' SQL query generation capabilities against baseline datasets.
 
+## Requirements
+
+To run this project, ensure the following dependencies are installed:
+
+### Python Dependencies
+
+- `pandas` - Data manipulation and analysis
+- `sqlalchemy` - Database connections and ORM
+- `anthropic` - Anthropic Claude API
+- `azure-core` - Azure SDK core library
+- `tabulate` - Report formatting
+- `python-dotenv` - Environment variable management
+- `pyodbc` - ODBC driver for SQL Server
+- `openai` - OpenAI API client
+
+### System Requirements
+
+- **Python Version:** Ensure Python 3.10 or higher is installed.
+- **ODBC Driver:** Install ODBC Driver 18 for SQL Server (recommended).
+
+### Installation
+
+1. **Clone the Repository:**
+
+   ```bash
+   git clone https://github.com/erincon01/llm_eval.git
+   cd llm_eval
+   ```
+
+2. **Install Python Dependencies:**
+   Use Poetry to install dependencies:
+
+   ```bash
+   poetry lock
+   poetry install
+   
+   ```
+
+   Check poetry envirormnent for debugging in vs.code:
+
+   ```bash
+   poetry env list
+   poetry env info --path
+   ```
+
+3. **Install System Dependencies:**
+   - Download and install [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server).
+
+4. **Set Up Environment Variables:**
+   Create a `.env` following the `.env.sample`
+   
+
 ## Project Structure
 
 ```
@@ -9,7 +61,6 @@ A comprehensive Python library for evaluating LLM models' SQL query generation c
 ├── data/                    # Data management classes
 ├── services/                # Service layer for external integrations
 ├── utils/                   # Utility functions and helpers
-├── python_modules/          # Legacy modules (being refactored)
 └── docs/                    # Configuration and results
 ```
 
@@ -153,20 +204,6 @@ DataFrame normalization and alignment utilities.
 - `normalize_numeric_columns(df1, df2)` - Normalize numeric precision across DataFrames
 - `align_columns_by_first_row(df1, df2)` - Align column order based on first row values
 
-#### `database_utils.py`
-Extended database operations and schema management.
-
-**Methods:**
-- `get_database_schema(source, as_data_frame)` - Retrieve database schema
-- `execute_stored_procedure(source, procedure_sql, as_data_frame)` - Execute stored procedures
-- `get_table_data(source, table_name, top_rows, as_data_frame)` - Get table data and columns
-- `get_orders(source, year)` - Get orders grouped by week
-- `get_customers_orders(source, year)` - Get customer orders by week
-- `get_partsupp_orders(source, year)` - Get part supplier orders
-- `get_nations_orders(source)` - Get nations orders by year
-- `get_years_with_orders(source, as_data_frame)` - Get distinct years from orders
-- `get_customers_with_orders(source, as_data_frame)` - Get customers with orders
-
 #### `file_utils.py`
 File operations utilities.
 
@@ -179,7 +216,6 @@ Low-level LLM API interactions.
 
 **Methods:**
 - `get_chat_completion_from_platform(platform, model, system_message, user_prompt, ...)` - Get chat completion from various platforms
-- `count_tokens(prompt)` - Count tokens in prompt using tiktoken
 
 #### `sql_utils.py`
 SQL query processing utilities.
@@ -240,8 +276,9 @@ Legacy utility functions (use specific utility modules instead).
 Complete evaluation workflow example:
 
 ```python
-from python_modules.llms_evaluator import LLMsEvaluator
-from python_modules.utils.reporting_utils import performance_report
+
+from llms_evaluator import LLMsEvaluator
+from utils.reporting_utils import performance_report
 
 # Initialize evaluator
 evaluator = LLMsEvaluator(
@@ -347,7 +384,6 @@ models_configs:
 - `langfuse` - LLM observability and tracing
 - `anthropic` - Anthropic Claude API
 - `azure-ai-inference` - Azure AI services
-- `tiktoken` - OpenAI token counting
 - `yaml` - Configuration file parsing
 - `tabulate` - Report formatting
 - `python-dotenv` - Environment variable management

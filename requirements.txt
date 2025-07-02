@@ -1,25 +1,9 @@
 python-dotenv
-requests
-pandas 
-streamlit
-streamlit-option-menu
-matplotlib
-seaborn
-beautifulsoup4
-pillow
-openai
+pandas
 pyodbc
 sqlalchemy
 pyyaml
-
 azure-core
-azure.ai.inference
-tiktoken
-polars
-python-docx
-
 anthropic
-vertexai
-
 langfuse
-tabulate # for tabular output in terminal
+tabulate

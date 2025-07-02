@@ -31,23 +31,134 @@ This diagram illustrates how the user interacts with the YAML files to define te
 
 ## 📝 Testing Procedure Overview
 
-| Step | Description |
-|------|-------------|
-| 1️⃣  | **Define Test Configuration**<br>Choose models, queries, and datasets to evaluate. |
-| 2️⃣  | **Execute Tests**<br>Run scripts to collect performance metrics. |
-| 3️⃣  | **Analyze Results**<br>Review reports to understand and improve model performance. |
 
----
+### 1️⃣  | **Define Test Configuration**
 
-## 📂 YAML Files in the `results` Directory
+Start by specifying which models, questions, and datasets you want to evaluate. Edit the relevant YAML files in the `results` directory:
 
-| File | Purpose |
-|------|---------|
-| `01-questions.yaml` | 🗒️ List of questions/queries with IDs, text, and expected outputs. |
-| `02-database_schema.yaml` | 🏗️ Database schema: tables, columns, and data types. |
-| `03-semantic-rules.yaml` | 🧠 Semantic rules for evaluating response correctness. |
-| `04-system_message.yaml` | 💬 System-level messages/prompts for tests. |
-| `05-models.yaml` | 🤖 Models to test, with configs (enabled, cost, etc.). |
+- **`01-questions.yaml`**: Add or update questions, including their IDs, text, and expected outputs.
+
+enumerate the questions you want to test. You need to provide:
+
+- the user question in natural language,
+- the SQL query that you expect to be generated,
+- the tables used in the query.
+
+Example of a question definition in `01-questions.yaml`:
+```yaml
+  - question_number: 1
+    user_question: |
+      Which customers from the 'BUILDING' market segment placed more than 10 orders in 1996? Order by total order value descending.
+    sql_query: |
+      SELECT
+          c.c_custkey AS customer_id,
+          c.c_name    AS customer_name,
+          COUNT(o.o_orderkey) AS num_orders,
+          SUM(o.o_totalprice) AS total_amount
+      FROM customer c
+      JOIN orders o ON c.c_custkey = o.o_custkey
+      WHERE c.c_mktsegment = 'BUILDING'
+        AND YEAR(o.o_orderdate) = 1996
+      GROUP BY c.c_custkey, c.c_name
+      HAVING COUNT(o.o_orderkey) > 10
+      ORDER BY total_amount DESC;
+    tables_used:
+      - "customer"
+      - "orders"
+```
+
+- **`02-database_schema.yaml`**: Ensure the database schema matches your test requirements.
+
+This file should include the database schema used for the queries. It is good for the model to include the primary keys, constraints, and foreign keys of the tables used in the queries.
+
+Example of a database schema definition in `02-database_schema.yaml`:
+```yaml
+tables:
+  - name: "region"
+    script: |
+      create table region (
+          r_regionkey integer not null,
+          r_name char(25) not null,
+          r_comment varchar(152),
+          primary key (r_regionkey)
+      );
+
+  - name: "nation"
+    script: |
+      create table nation (
+          n_nationkey integer not null,
+          n_name char(25) not null,
+          n_regionkey integer not null,
+          n_comment varchar(152),
+          primary key (n_nationkey)
+      );
+```
+
+
+- **`03-semantic-rules.yaml`**: Define or refine rules for evaluating the correctness of model responses.
+
+This data goes to the system message used in the LLM calls. This is the place to influence the model on best practices, coding standards, and specific SQL dialects. Text is free-form, markdonw is fantastic for LLMs.
+
+Example of semantic rules in `03-semantic-rules.yaml`:
+```yaml
+## CODING RULES  
+• Include **id + name** for every entity mentioned; drop whole blocks else.  
+• columns order: Entity_blocks, Time, Metrics
+• Preserve column order exactly.  
+• Use snake_case aliases; SQL keywords UPPER.  
+• `GROUP BY` every non-aggregated canonical column.  
+• Map: `COUNT(*)`→num_orders, `SUM(o_totalprice)`→total_amount.  
+• New metrics: alias + append after existing ones.  
+• Ensure the query runs without alias/group errors.
+
+
+```
+
+- **`04-system_message.yaml`**: Adjust system-level prompts or instructions as needed.
+- **`05-models.yaml`**: Select which models to test and configure their settings (e.g., enable/disable, cost parameters).
+
+This file contains the list of models to be tested. You can add new models or modify existing ones. Each model should have a name, description, and cost parameters.
+
+Example of a model definition in `05-models.yaml`:
+```yaml
+models_configs:
+  - id: MSDN_CORP
+    enabled: true
+    models:
+      - name: DeepSeek-V3-0324
+        cost_input_tokens_EUR_1K:  0.00114
+        cost_output_tokens_EUR_1K: 0.00456
+      - name: gpt-4o
+        cost_input_tokens_EUR_1K:  0.00250
+        cost_output_tokens_EUR_1K: 0.01000
+      - name: gpt-4o-mini
+```
+
+The model endpoint, and the api key must be added to the `.env` file.
+If you named the model as MSDN_CORP, you should add the following lines to your `.env` file:
+
+```plaintext
+ENDPOINT_MSDN_CORP=https://api.example.com/v1/models
+API_KEY_MSDN_CORP=your_api_key_here
+```
+
+### 2️⃣  | **Execute Tests**
+
+Run the provided test scripts to evaluate your configurations. These scripts will:
+
+- Process your YAML definitions.
+- Interact with the selected models.
+- Collect performance metrics and generate result files (e.g., `results_llm_[iter]_{model_name}.yaml` and `performance_report.txt`).
+
+### 3️⃣  | **Analyze Results**
+
+Review the generated reports to assess model performance:
+
+- Examine the YAML result files for detailed metrics on each query and model.
+- Use `performance_report.txt` to compare models across key metrics such as accuracy, speed, and cost.
+- Identify strengths, weaknesses, and areas for improvement based on the data.
+
+By following these steps, you can systematically evaluate and improve your language models.
 
 ---
 

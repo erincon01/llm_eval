@@ -21,6 +21,7 @@ To run this project, ensure the following dependencies are installed:
 
 - **Python Version:** Ensure Python 3.10 or higher is installed.
 - **ODBC Driver:** Install ODBC Driver 18 for SQL Server (recommended).
+- **SQL Database** used as example tpch database, build your own test!
 
 ### Installation
 

@@ -1,22 +1,59 @@
 import time
-
+import argparse
 from llms_evaluator import LLMsEvaluator
 from utils.reporting_utils import performance_report
 
 if __name__ == "__main__":
-    """
-    CAUTION: "Phi-4" have to implementfunction to remove ````sql and ```code
-    REMOVED: "Phi-4-mini-instruct", "Phi-3-small-128k -instruct",
-        "Phi-3-medium-128k-instruct", do not build sql code. lots of comments:
-    REMOVED: "o3-mini", "o4-mini" removed because are very slow in response,
-        for example:
-    """
+    parser = argparse.ArgumentParser(description="Run LLM evaluation.")
+    parser.add_argument(
+        "--questions_file_name",
+        type=str,
+        default="./docs/01-questions.yaml",
+        help="Path to the questions YAML file.",
+    )
+    parser.add_argument(
+        "--db_schema_file_name",
+        type=str,
+        default="./docs/02-database_schema.yaml",
+        help="Path to the database schema YAML file.",
+    )
+    parser.add_argument(
+        "--semantic_rules_file_name",
+        type=str,
+        default="./docs/03-semantic-rules.md",
+        help="Path to the semantic rules Markdown file.",
+    )
+    parser.add_argument(
+        "--system_message_file_name",
+        type=str,
+        default="./docs/04-system_message.md",
+        help="Path to the system message Markdown file.",
+    )
+    parser.add_argument(
+        "--models_file_name",
+        type=str,
+        default="./docs/05-models.yaml",
+        help="Path to the models configuration YAML file.",
+    )
+    parser.add_argument(
+        "--iterations",
+        type=int,
+        default=1,
+        help="Number of iterations for the LLM evaluation.",
+    )
+    parser.add_argument(
+        "--get_baseline_from_data_source",
+        action="store_true",
+        help="Run step 1 to get baseline resultsets from the data source.",
+    )
+    args = parser.parse_args()
+
     evaluator = LLMsEvaluator(
-        questions_file_name="./docs/01-questions.yaml",
-        db_schema_file_name="./docs/02-database_schema.yaml",
-        semantic_rules_file_name="./docs/03-semantic-rules.md",
-        system_message_file_name="./docs/04-system_message.md",
-        models_file_name="./docs/05-models.yaml",
+        questions_file_name=args.questions_file_name,
+        db_schema_file_name=args.db_schema_file_name,
+        semantic_rules_file_name=args.semantic_rules_file_name,
+        system_message_file_name=args.system_message_file_name,
+        models_file_name=args.models_file_name,
     )
 
     temperature = 0.9
@@ -24,13 +61,14 @@ if __name__ == "__main__":
 
     # STEP 1: run the queries in the database in order
     # to have a baseline to compare the results
-
-    # evaluator.execute_queries(
-    #         sql_query_column ="sql_query",
-    #         summary_file_name = "questions_baseline_summary.csv",
-    #         results_to_path = results_path + "/baseline_dataset",
-    #         persist_results=True,
-    #         drop_results_if_exists=True)
+    if args.get_baseline_from_data_source:
+        evaluator.execute_queries(
+            sql_query_column="sql_query",
+            summary_file_name="questions_baseline_summary.csv",
+            results_to_path=results_path + "/baseline_dataset",
+            persist_results=True,
+            drop_results_if_exists=True,
+        )
 
     # STEP 2: load the dataframes with the resultsets to compare
     # with the results retrieved
@@ -39,7 +77,7 @@ if __name__ == "__main__":
 
     # STEP 3: n iterations of the LLM to generate the SQL queries
 
-    number_of_iterations = 1
+    number_of_iterations = args.iterations
 
     for i in range(number_of_iterations):
 
@@ -81,7 +119,6 @@ if __name__ == "__main__":
 
     # STEP 4: performance report
 
-    # results_path = "./docs/results-pub2"
     performance_report(
         results_path=results_path,
         file_name_prefix="questions_summary_results_llm",

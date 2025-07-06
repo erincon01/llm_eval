@@ -16,12 +16,38 @@ To run this project, ensure the following dependencies are installed:
 - `python-dotenv` - Environment variable management
 - `pyodbc` - ODBC driver for SQL Server
 - `openai` - OpenAI API client
+- `duckdb` - DuckDB database engine
 
 ### System Requirements
 
 - **Python Version:** Ensure Python 3.10 or higher is installed.
 - **ODBC Driver:** Install ODBC Driver 18 for SQL Server (recommended).
 - **SQL Database** used as example tpch database, build your own test!
+
+### Database Sources
+
+The application supports multiple database sources:
+
+1. **SQL Azure Database or SQL Server OnPrem** (`sql-server`)
+3. **DuckDB File** (`duckdb`)
+
+#### DuckDB Setup
+
+To use DuckDB with TPCH sample data:
+
+```bash
+# Set up TPCH sample data
+python scripts/setup_duckdb.py
+
+# Set environment variable
+DUCKDB_PATH="./docs/tpch-sf10.db"
+```
+
+To download preloaded TPCH databases for duckdb:
+https://duckdb.org/docs/stable/core_extensions/tpch.html
+
+
+```bash
 
 ### Installation
 
@@ -104,7 +130,7 @@ Handles database connections and SQL execution.
 - `get_connection(source)` - Get database connection engine
 - `decode_source(source)` - Normalize database source names
 
-**Supported Sources:** `azure-sql`, `onprem-sql`
+**Supported Sources:** `sql-server`, `duckdb`
 
 #### `llm_service.py`
 Manages LLM interactions for SQL generation.
@@ -234,16 +260,6 @@ Performance reporting and analysis.
 - `_generate_ranking_reports(all_data)` - Ranking reports by different metrics
 - `_generate_combined_ranking(agg)` - Combined ranking by quality, time, and price
 
-### File Management
-
-#### `file_consolidation.py`
-Consolidates evaluation results across iterations and models.
-
-**Methods:**
-- `consolidate_files_by_iteration(results_path, file_name_prefix)` - Consolidate files by iteration
-- `consolidate_files_by_model(results_path, file_name_prefix)` - Consolidate files by model
-- `consolidate_csv_files(results_path, file_name_prefix)` - Consolidate CSV summary files
-
 ### Templates
 
 #### `query_templates.py`
@@ -283,33 +299,36 @@ from utils.reporting_utils import performance_report
 
 # Initialize evaluator
 evaluator = LLMsEvaluator(
-    questions_file_name="./docs/01-questions.yaml",
+    questions_file_name="./docs/01-questions-sql-server.yaml",
     db_schema_file_name="./docs/02-database_schema.yaml", 
-    semantic_rules_file_name="./docs/03-semantic-rules.md",
-    system_message_file_name="./docs/04-system_message.md",
-    models_file_name="./docs/05-models.yaml"
+    semantic_rules_file_name="./docs/03-semantic_rules-sql-server.md",
+    system_message_file_name="./docs/04-system_message-sql-server.md",
+    models_file_name="./docs/05-models.yaml",
+    data_source="sql-server"  # or "duckdb"
 )
 
 # Step 1: Generate baseline datasets
 evaluator.execute_queries(
     sql_query_column="sql_query",
     summary_file_name="questions_baseline_summary.csv",
-    results_to_path="./docs/results/baseline_dataset",
+    results_to_path="./docs/results/baseline_dataset-sql-server",
     persist_results=True,
     drop_results_if_exists=True
 )
 
 # Step 2: Load baseline for comparison
-evaluator.load_baseline_datasets("./docs/results/baseline_dataset")
+evaluator.load_baseline_datasets("./docs/results/baseline_dataset-sql-server")
 
 # Step 3: Run evaluation iterations
 for i in range(number_of_iterations):
+    i_str = str(i + 1).zfill(2)
     evaluator.evaluate_models(
         temperature=0.9,
         results_to_path="./docs/results",
         file_name_prefix=f"results_llm_{i:02d}",
         log_results=True,
-        log_summary=True
+        log_summary=True,
+        iteration=i_str,
     )
 
 # Step 4: Generate performance reports
@@ -317,6 +336,30 @@ performance_report(
     results_path="./docs/results",
     file_name_prefix="questions_summary_results_llm"
 )
+```
+
+## Usage Examples
+
+### Using SQL Server Database (Default)
+```bash
+python ./src/main_evaluation.py \
+    --questions_file_name ./docs/01-questions.yaml \
+    --database_source sql-server \
+    --get_baseline_from_data_source \
+    --iterations 1
+```
+
+### Using DuckDB with TPCH Data
+```bash
+# First, set up DuckDB with sample data
+python scripts/setup_duckdb.py
+
+# Then run evaluation
+python ./src/main_evaluation.py \
+    --questions_file_name ./docs/01-questions.yaml \
+    --database_source duckdb \
+    --get_baseline_from_data_source \
+    --iterations 1
 ```
 
 ## Configuration Files
@@ -354,7 +397,7 @@ models_configs:
 ## Environment Variables
 
 ### Database Configuration
-- `DB_SERVER_AZURE`, `DB_NAME_AZURE`, `DB_USER_AZURE`, `DB_PASSWORD_AZURE`
+- `SQL_SERVER`, `SQL_SERVER_DATABASE`, `SQL_SERVER_USERNAME`, `SQL_SERVER_PASSWORD`
 
 ### LLM API Configuration
 - `OPENAI_ENDPOINT`, `OPENAI_KEY`, `OPENAI_MODEL`

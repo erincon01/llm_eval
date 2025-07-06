@@ -30,6 +30,7 @@ class QuestionProcessor:
         temperature,
         max_tokens,
         iteration,
+        data_source,
     ):
         """
         Process each question, generate SQL queries using the LLM,
@@ -45,6 +46,7 @@ class QuestionProcessor:
         :param temperature: Temperature for the LLM.
         :param max_tokens: Maximum tokens for the LLM.
         :param iteration: Iteration identifier.
+        :param data_source: The database source to execute the queries against.
         :return: summary of the processing with the model.
         """
 
@@ -90,7 +92,9 @@ class QuestionProcessor:
             )
 
             sql_query, changed = remove_quotations(sql_query)
-            df, executed, rows, columns, duration_sql = self.db_service.execute_sql_query(sql_query)
+            df, executed, rows, columns, duration_sql = self.db_service.execute_sql_query(
+                sql_query, data_source
+            )
 
             # compare the result with the baseline
             baseline_entry = next(

@@ -5,7 +5,14 @@ import pandas as pd
 import tabulate
 
 
-def performance_report(results_path: str, file_name_prefix: str) -> None:
+def _print_and_log(message: str, log_file_path: str) -> None:
+    """Print message to console and append to log file."""
+    print(message)
+    with open(log_file_path, "a", encoding="utf-8") as f:
+        f.write(message + "\n")
+
+
+def performance_report(results_path: str, file_name_prefix: str, data_source: str = None) -> None:
     """
     Load all the CSV files in the results_path folder that start with the file_name_prefix.
     Calculate the performance of each model based on the number of rows, columns, time taken
@@ -13,6 +20,7 @@ def performance_report(results_path: str, file_name_prefix: str) -> None:
 
     :param results_path: Path to the results folder.
     :param file_name_prefix: Prefix of the files to consolidate.
+    :param data_source: Optional filter to include only files that contain this string in the filename.
     :return: None
     """
     # Search for the generated files
@@ -20,8 +28,13 @@ def performance_report(results_path: str, file_name_prefix: str) -> None:
 
     for file in os.listdir(results_path):
         file_path = os.path.join(results_path, file)
-        if os.path.isfile(file_path) and file.startswith(file_name_prefix) and file.endswith(".csv"):
-            filtered_files.append(file_path)
+        if (os.path.isfile(file_path) and
+                file.startswith(file_name_prefix) and
+                file.endswith(".csv")):
+            
+            # Apply data_source filter if provided
+            if data_source is None or data_source in file:
+                filtered_files.append(file_path)
 
     if not filtered_files:
         print("No files found with the specified prefix.")
@@ -90,13 +103,26 @@ def performance_report(results_path: str, file_name_prefix: str) -> None:
     # Calculate the total token cost
     all_data["total_cost_tokens_EUR"] = all_data["cost_input_tokens_EUR"] + all_data["cost_output_tokens_EUR"]
 
+    # Create log file path
+    log_file_name = f"performance_report_{data_source}.txt" if data_source else "performance_report.txt"
+    log_file_path = os.path.join(results_path, log_file_name)
+    
+    # Remove existing log file if it exists
+    if os.path.exists(log_file_path):
+        os.remove(log_file_path)
+
+    if data_source:
+        _print_and_log(f"Data source: {data_source}", log_file_path)
+
     # Generate performance reports
-    _generate_model_performance_report(all_data)
-    _generate_query_performance_report(all_data)
-    _generate_ranking_reports(all_data)
+    _generate_model_performance_report(all_data, log_file_path)
+    _generate_query_performance_report(all_data, log_file_path)
+    _generate_ranking_reports(all_data, log_file_path)
+    
+    print(f"\nPerformance report saved to: {log_file_path}")
 
 
-def _generate_model_performance_report(all_data: pd.DataFrame) -> None:
+def _generate_model_performance_report(all_data: pd.DataFrame, log_file_path: str) -> None:
     """Generate performance report aggregated by model."""
     agg = (
         all_data.groupby("model")
@@ -123,11 +149,12 @@ def _generate_model_performance_report(all_data: pd.DataFrame) -> None:
     agg[cols_to_round] = agg[cols_to_round].round(2)
     agg["mean_cost_EUR"] = agg["mean_cost_EUR"].round(6)
 
-    print("\nPerformance Report per model:\n")
-    print(tabulate.tabulate(agg, headers="keys", tablefmt="pipe", showindex=False))
+    _print_and_log("\nPerformance Report per model:\n", log_file_path)
+    table_output = tabulate.tabulate(agg, headers="keys", tablefmt="pipe", showindex=False)
+    _print_and_log(table_output, log_file_path)
 
 
-def _generate_query_performance_report(all_data: pd.DataFrame) -> None:
+def _generate_query_performance_report(all_data: pd.DataFrame, log_file_path: str) -> None:
     """Generate performance report aggregated by query."""
     agg_queries = (
         all_data.groupby(["question"])
@@ -150,11 +177,12 @@ def _generate_query_performance_report(all_data: pd.DataFrame) -> None:
     ]
     agg_queries[cols_to_round] = agg_queries[cols_to_round].round(2)
 
-    print("\nPerformance Report per query:\n")
-    print(tabulate.tabulate(agg_queries, headers="keys", tablefmt="pipe", showindex=False))
+    _print_and_log("\nPerformance Report per query:\n", log_file_path)
+    table_output = tabulate.tabulate(agg_queries, headers="keys", tablefmt="pipe", showindex=False)
+    _print_and_log(table_output, log_file_path)
 
 
-def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
+def _generate_ranking_reports(all_data: pd.DataFrame, log_file_path: str) -> None:
     """Generate ranking reports for different metrics."""
     agg = (
         all_data.groupby("model")
@@ -173,45 +201,42 @@ def _generate_ranking_reports(all_data: pd.DataFrame) -> None:
 
     # Best models by LLM time
     best_models = agg.sort_values(by="mean_llm_time")
-    print("\nBest models based on average LLM time:\n")
-    print(
-        tabulate.tabulate(
-            best_models[["model", "mean_llm_time"]],
-            headers="keys",
-            tablefmt="pipe",
-            showindex=False,
-        )
+    _print_and_log("\nBest models based on average LLM time:\n", log_file_path)
+    table_output = tabulate.tabulate(
+        best_models[["model", "mean_llm_time"]],
+        headers="keys",
+        tablefmt="pipe",
+        showindex=False,
     )
+    _print_and_log(table_output, log_file_path)
 
     # Best models by cost
     best_cost_models = agg.sort_values(by="mean_cost_EUR")
-    print("\nBest models based on mean token cost:\n")
-    print(
-        tabulate.tabulate(
-            best_cost_models[["model", "mean_cost_EUR"]],
-            headers="keys",
-            tablefmt="pipe",
-            showindex=False,
-        )
+    _print_and_log("\nBest models based on mean token cost:\n", log_file_path)
+    table_output = tabulate.tabulate(
+        best_cost_models[["model", "mean_cost_EUR"]],
+        headers="keys",
+        tablefmt="pipe",
+        showindex=False,
     )
+    _print_and_log(table_output, log_file_path)
 
     # Best models by data quality
     best_data_rows_equality = agg.sort_values(by="mean_datasets_equality", ascending=False)
-    print("\nBest models based on average datasets equality:\n")
-    print(
-        tabulate.tabulate(
-            best_data_rows_equality[["model", "mean_datasets_equality"]],
-            headers="keys",
-            tablefmt="pipe",
-            showindex=False,
-        )
+    _print_and_log("\nBest models based on average datasets equality:\n", log_file_path)
+    table_output = tabulate.tabulate(
+        best_data_rows_equality[["model", "mean_datasets_equality"]],
+        headers="keys",
+        tablefmt="pipe",
+        showindex=False,
     )
+    _print_and_log(table_output, log_file_path)
 
     # Generate combined ranking
-    _generate_combined_ranking(agg)
+    _generate_combined_ranking(agg, log_file_path)
 
 
-def _generate_combined_ranking(agg: pd.DataFrame) -> None:
+def _generate_combined_ranking(agg: pd.DataFrame, log_file_path: str) -> None:
     """Generate combined ranking based on quality, time, and price."""
     # Create rankings
     agg["rank_quality"] = agg["mean_datasets_equality"].rank(method="min", ascending=False).astype(int)
@@ -250,14 +275,13 @@ def _generate_combined_ranking(agg: pd.DataFrame) -> None:
     # Remove auxiliary columns
     agg.drop(columns=[f"_sort_{col}" for col in cols_rank], inplace=True)
 
-    print("\n\nRanking of the models based on the total cost, LLM time and source rows equality:\n")
-    print(
-        tabulate.tabulate(
-            agg[["model", "rank_quality", "rank_time", "rank_price"]],
-            headers="keys",
-            tablefmt="pipe",
-            showindex=False,
-        )
+    _print_and_log("\n\nRanking of the models based on the total cost, LLM time and source rows equality:\n", log_file_path)
+    table_output = tabulate.tabulate(
+        agg[["model", "rank_quality", "rank_time", "rank_price"]],
+        headers="keys",
+        tablefmt="pipe",
+        showindex=False,
     )
+    _print_and_log(table_output, log_file_path)
 
-    print("\n\n")
+    _print_and_log("\n\n", log_file_path)

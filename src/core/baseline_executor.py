@@ -22,6 +22,7 @@ class BaselineExecutor:
         persist_results: bool = True,
         drop_results_if_exists: bool = False,
         questions_file_name: str = None,
+        database_source: str = None,
     ):
         """
         Run the SQL queries from the questions file and export the results to CSV files.
@@ -33,6 +34,7 @@ class BaselineExecutor:
         :param persist_results: If True, the results will be saved to CSV files.
         :param drop_results_if_exists: If True, the existing results will be removed before running the queries.
         :param questions_file_name: Fallback file name if questions is None.
+        :param database_source: The database source to execute the queries against.
         :return: None
         """
 
@@ -49,7 +51,9 @@ class BaselineExecutor:
 
             question_number = question["question_number"]
             sql_query = question.get(sql_query_column, "")
-            df, executed, rows, columns, duration_sql = self.db_service.execute_sql_query(sql_query)
+            df, executed, rows, columns, duration_sql = self.db_service.execute_sql_query(
+                sql_query, database_source
+            )
 
             summary_text.append(f"{question_number}\t{duration_sql:.1f}\t{columns}\t{rows}")
 

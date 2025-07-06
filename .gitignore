@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# duckdb files
+*.db
+*.tmp
+
 # Distribution / packaging
 .Python
 build/

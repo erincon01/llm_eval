@@ -1,0 +1,1178 @@
+questions:
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 1
+  user_question: |
+    Which customers from the 'BUILDING' market segment placed more than 10 orders in 1996? Order by total order value descending.
+  sql_query: |
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name    AS customer_name,
+        COUNT(o.o_orderkey) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM customer c
+    JOIN orders o ON c.c_custkey = o.o_custkey
+    WHERE c.c_mktsegment = 'BUILDING'
+      AND YEAR(o.o_orderdate) = 1996
+    GROUP BY c.c_custkey, c.c_name
+    HAVING COUNT(o.o_orderkey) > 10
+    ORDER BY total_amount DESC;
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        COUNT(o.o_orderkey) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM customer c
+    INNER JOIN orders o ON c.c_custkey = o.o_custkey
+    WHERE c.c_mktsegment = 'BUILDING'
+      AND o.o_orderdate BETWEEN '1996-01-01' AND '1996-12-31'
+    GROUP BY c.c_custkey, c.c_name
+    HAVING COUNT(o.o_orderkey) > 10
+    ORDER BY total_amount DESC;
+  tables_used:
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 24
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.26
+  duration_llm: 1.59
+  prompt_tokens: 1820
+  completion_tokens: 129
+  total_tokens: 1949
+  cost_input_EUR: 0.000237
+  cost_output_EUR: 6.4e-05
+  cost_total_EUR: 0.000301
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 2
+  user_question: |
+    For each region, what is the average supplier account balance and how many suppliers are in each region? Order by average balance descending.
+  sql_query: |
+    SELECT
+        r.r_regionkey AS region_id,
+        r.r_name      AS region_name,
+        AVG(s.s_acctbal) AS avg_balance,
+        COUNT(s.s_suppkey) AS supplier_count
+    FROM region r
+    JOIN nation n ON r.r_regionkey = n.n_regionkey
+    JOIN supplier s ON n.n_nationkey = s.s_nationkey
+    GROUP BY r.r_regionkey, r.r_name
+    ORDER BY avg_balance DESC;
+  llm_sql_query: |-
+    SELECT
+        r.r_regionkey AS region_id,
+        r.r_name AS region_name,
+        AVG(s.s_acctbal) AS average_supplier_account_balance,
+        COUNT(s.s_suppkey) AS num_suppliers
+    FROM supplier s
+    INNER JOIN nation n ON s.s_nationkey = n.n_nationkey
+    INNER JOIN region r ON n.n_regionkey = r.r_regionkey
+    GROUP BY r.r_regionkey, r.r_name
+    ORDER BY average_supplier_account_balance DESC;
+  tables_used:
+  - region
+  - nation
+  - supplier
+  executed: true
+  llm_sql_query_changed: false
+  rows: 5
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.03
+  duration_llm: 1.31
+  prompt_tokens: 1729
+  completion_tokens: 107
+  total_tokens: 1836
+  cost_input_EUR: 0.000225
+  cost_output_EUR: 5.3e-05
+  cost_total_EUR: 0.000278
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 3
+  user_question: |
+    List the top 5 parts by total quantity ordered across all years. Order by total quantity descending.
+  sql_query: |
+    SELECT
+        p.p_partkey AS part_id,
+        p.p_name    AS part_name,
+        SUM(l.l_quantity) AS total_quantity
+    FROM part p
+    JOIN lineitem l ON p.p_partkey = l.l_partkey
+    GROUP BY p.p_partkey, p.p_name
+    ORDER BY total_quantity DESC
+    LIMIT 5;
+  llm_sql_query: |-
+    SELECT
+        p.p_partkey AS part_id,
+        p.p_name AS part_name,
+        SUM(l.l_quantity) AS total_quantity
+    FROM
+        lineitem l
+    INNER JOIN
+        part p ON l.l_partkey = p.p_partkey
+    GROUP BY
+        p.p_partkey, p.p_name
+    ORDER BY
+        total_quantity DESC
+    LIMIT 5;
+  tables_used:
+  - part
+  - lineitem
+  executed: true
+  llm_sql_query_changed: false
+  rows: 5
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 29.02
+  duration_llm: 1.28
+  prompt_tokens: 2011
+  completion_tokens: 81
+  total_tokens: 2092
+  cost_input_EUR: 0.000261
+  cost_output_EUR: 4.0e-05
+  cost_total_EUR: 0.000302
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 4
+  user_question: |
+    For each year from 1992 to 1994, identify the top 5 parts by total quantity ordered for customers from the region of ASIA. Order by year and total quantity descending.
+  sql_query: |
+    WITH yearly_totals AS (
+        SELECT
+            p.p_partkey AS part_id,
+            p.p_name    AS part_name,
+            YEAR(o.o_orderdate) AS order_year,
+            SUM(l.l_quantity) AS total_quantity,
+            ROW_NUMBER() OVER (
+                PARTITION BY YEAR(o.o_orderdate)
+                ORDER BY SUM(l.l_quantity) DESC
+            ) AS rn
+        FROM part p
+        JOIN lineitem l ON p.p_partkey = l.l_partkey
+        JOIN orders o ON l.l_orderkey = o.o_orderkey
+        JOIN customer c ON o.o_custkey = c.c_custkey
+        JOIN nation n ON c.c_nationkey = n.n_nationkey
+        join region r ON n.n_regionkey = r.r_regionkey
+        WHERE r.r_name = 'ASIA'
+          AND YEAR(o.o_orderdate) BETWEEN 1992 AND 1994
+        GROUP BY p.p_partkey, p.p_name, YEAR(o.o_orderdate)
+    )
+    SELECT
+        part_id,
+        part_name,
+        order_year,
+        total_quantity
+    FROM yearly_totals
+    WHERE rn <= 5
+    ORDER BY order_year, total_quantity DESC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        p.p_partkey AS part_id,
+        p.p_name AS part_name,
+        SUM(l.l_quantity) AS total_quantity
+    FROM orders o
+    INNER JOIN customer c ON o.o_custkey = c.c_custkey
+    INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+    INNER JOIN region r ON n.n_regionkey = r.r_regionkey
+    INNER JOIN lineitem l ON o.o_orderkey = l.l_orderkey
+    INNER JOIN part p ON l.l_partkey = p.p_partkey
+    WHERE r.r_name = 'ASIA'
+      AND o.o_orderdate BETWEEN DATE '1992-01-01' AND DATE '1994-12-31'
+    GROUP BY order_year, p.p_partkey, p.p_name
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) <= 5
+    ORDER BY order_year, total_quantity DESC;
+  tables_used:
+  - part
+  - lineitem
+  - orders
+  - customer
+  - nation
+  executed: true
+  llm_sql_query_changed: false
+  rows: 15
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 5.29
+  duration_llm: 2.29
+  prompt_tokens: 2339
+  completion_tokens: 220
+  total_tokens: 2559
+  cost_input_EUR: 0.000304
+  cost_output_EUR: 0.00011
+  cost_total_EUR: 0.000414
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 5
+  user_question: |
+    For orders placed in 1994, how many unique suppliers provided parts of type 'SMALL PLATED STEEL' and size 4,
+    and what was their average supply cost per supplier, weighted by available quantity? Order the results by supplier.
+  sql_query: |
+    SELECT
+        l.l_suppkey AS supplier_id,
+        s.s_name    AS supplier_name,
+        COUNT(DISTINCT l.l_suppkey) AS num_suppliers,
+        AVG(ps.ps_supplycost * ps.ps_availqty) AS avg_cost
+    FROM orders o
+    JOIN lineitem l ON o.o_orderkey = l.l_orderkey
+    JOIN partsupp ps ON l.l_partkey = ps.ps_partkey AND l.l_suppkey = ps.ps_suppkey
+    JOIN part p ON l.l_partkey = p.p_partkey
+    JOIN supplier s ON l.l_suppkey = s.s_suppkey
+    WHERE o.o_orderdate BETWEEN '1994-01-01' AND '1994-12-31'
+      AND p.p_size = 4
+      AND p.p_type = 'SMALL PLATED STEEL'
+    GROUP BY l.l_suppkey, s.s_name
+    ORDER BY s.s_name ASC;
+  llm_sql_query: |-
+    SELECT
+        s.s_suppkey AS supplier_id,
+        s.s_name AS supplier_name,
+        COUNT(DISTINCT ps.ps_partkey) AS num_unique_parts,
+        SUM(ps.ps_availqty * ps.ps_supplycost) / SUM(ps.ps_availqty) AS weighted_avg_supply_cost
+    FROM
+        orders o
+    INNER JOIN
+        lineitem l ON o.o_orderkey = l.l_orderkey
+    INNER JOIN
+        part p ON l.l_partkey = p.p_partkey
+    INNER JOIN
+        partsupp ps ON p.p_partkey = ps.ps_partkey AND l.l_suppkey = ps.ps_suppkey
+    INNER JOIN
+        supplier s ON ps.ps_suppkey = s.s_suppkey
+    WHERE
+        o.o_orderdate BETWEEN '1994-01-01' AND '1994-12-31'
+        AND p.p_type = 'SMALL PLATED STEEL'
+        AND p.p_size = 4
+    GROUP BY
+        s.s_suppkey, s.s_name
+    ORDER BY
+        s.s_name;
+  tables_used:
+  - orders
+  - lineitem
+  - partsupp
+  - part
+  - supplier
+  executed: true
+  llm_sql_query_changed: false
+  rows: 648
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 0.75
+  datasets_equality: 0.0
+  duration_sql: 1.35
+  duration_llm: 2.41
+  prompt_tokens: 2360
+  completion_tokens: 227
+  total_tokens: 2587
+  cost_input_EUR: 0.000307
+  cost_output_EUR: 0.000113
+  cost_total_EUR: 0.00042
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 6
+  user_question: |
+    List the top 10 suppliers from GERMANY that supplied parts of type 'SMALL PLATED STEEL' and size 4.
+    For each, calculate the total supply cost (supply cost x available quantity).
+    Do not include the supplier's nation in the output. Order by total cost descending.
+  sql_query: |
+    SELECT
+        s.s_suppkey AS supplier_id,
+        s.s_name    AS supplier_name,
+        SUM(ps.ps_supplycost * ps.ps_availqty) AS total_cost
+    FROM supplier s
+    JOIN partsupp ps ON s.s_suppkey = ps.ps_suppkey
+    JOIN nation n ON s.s_nationkey = n.n_nationkey
+    JOIN part p ON ps.ps_partkey = p.p_partkey
+    WHERE p.p_size = 4
+      AND p.p_type = 'SMALL PLATED STEEL'
+      AND n.n_name = 'GERMANY'
+    GROUP BY s.s_suppkey, s.s_name
+    ORDER BY total_cost DESC
+    LIMIT 10;
+  llm_sql_query: |-
+    SELECT
+        s.s_suppkey AS supplier_id,
+        s.s_name AS supplier_name,
+        SUM(ps.ps_supplycost * ps.ps_availqty) AS total_supply_cost
+    FROM
+        supplier s
+    INNER JOIN
+        nation n ON s.s_nationkey = n.n_nationkey
+    INNER JOIN
+        partsupp ps ON s.s_suppkey = ps.ps_suppkey
+    INNER JOIN
+        part p ON ps.ps_partkey = p.p_partkey
+    WHERE
+        n.n_name = 'GERMANY'
+        AND p.p_type = 'SMALL PLATED STEEL'
+        AND p.p_size = 4
+    GROUP BY
+        s.s_suppkey, s.s_name
+    ORDER BY
+        total_supply_cost DESC
+    LIMIT 10;
+  tables_used:
+  - supplier
+  - partsupp
+  - nation
+  - part
+  executed: true
+  llm_sql_query_changed: false
+  rows: 10
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 0.67
+  datasets_equality: 0.0
+  duration_sql: 0.09
+  duration_llm: 1.82
+  prompt_tokens: 1900
+  completion_tokens: 168
+  total_tokens: 2068
+  cost_input_EUR: 0.000247
+  cost_output_EUR: 8.4e-05
+  cost_total_EUR: 0.000331
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 7
+  user_question: |
+    Find the average order price (rounded to 2 decimals) and the total number of orders per year between 1992 and 1998, inclusive.
+    Group by the year of the order date and return the results ordered by year ascending.
+    Return the year, the total number of orders, and the average price.
+  sql_query: |
+    SELECT
+        YEAR(o_orderdate) AS order_year,
+        AVG(o_totalprice) AS avg_price,
+        COUNT(*) AS num_orders
+    FROM orders
+    WHERE YEAR(o_orderdate) BETWEEN 1992 AND 1998
+    GROUP BY YEAR(o_orderdate)
+    ORDER BY order_year ASC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o_orderdate) AS order_year,
+        COUNT(*) AS num_orders,
+        ROUND(AVG(o_totalprice), 2) AS avg_order_price
+    FROM orders
+    WHERE o_orderdate BETWEEN DATE '1992-01-01' AND DATE '1998-12-31'
+    GROUP BY EXTRACT(YEAR FROM o_orderdate)
+    ORDER BY order_year ASC;
+  tables_used:
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 7
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 0.67
+  datasets_equality: 0.0
+  duration_sql: 0.06
+  duration_llm: 1.23
+  prompt_tokens: 1758
+  completion_tokens: 84
+  total_tokens: 1842
+  cost_input_EUR: 0.000229
+  cost_output_EUR: 4.2e-05
+  cost_total_EUR: 0.000271
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 8
+  user_question: |
+    Which three nations had the highest total order amount in 1997? Also return the number of orders per nation.
+    Sort by total amount descending and limit the result to 3 rows
+  sql_query: |
+    SELECT
+        n.n_nationkey AS nation_id,
+        n.n_name      AS nation_name,
+        COUNT(o.o_orderkey) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM nation n
+    JOIN customer c ON n.n_nationkey = c.c_nationkey
+    JOIN orders o ON c.c_custkey = o.o_custkey
+    WHERE YEAR(o.o_orderdate) = 1997
+    GROUP BY n.n_nationkey, n.n_name
+    ORDER BY total_amount DESC
+    LIMIT 3;
+  llm_sql_query: |-
+    SELECT
+        n.n_nationkey AS nation_id,
+        n.n_name AS nation_name,
+        COUNT(o.o_orderkey) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM orders o
+    INNER JOIN customer c ON o.o_custkey = c.c_custkey
+    INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+    WHERE EXTRACT(YEAR FROM o.o_orderdate) = 1997
+    GROUP BY n.n_nationkey, n.n_name
+    ORDER BY total_amount DESC
+    LIMIT 3;
+  tables_used:
+  - nation
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 3
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.18
+  duration_llm: 1.4
+  prompt_tokens: 1878
+  completion_tokens: 119
+  total_tokens: 1997
+  cost_input_EUR: 0.000244
+  cost_output_EUR: 5.9e-05
+  cost_total_EUR: 0.000304
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 9
+  user_question: |
+    For each year, list the number of sales and the total amount for items ordered in December for customers based in the region of EUROPE whose market segment is 'AUTOMOBILE', ordered by year ascending.
+  sql_query: |
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        COUNT(*) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM orders o
+    JOIN customer c ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'EUROPE'
+      AND c.c_mktsegment = 'AUTOMOBILE'
+      AND MONTH(o.o_orderdate) = 12
+    GROUP BY YEAR(o.o_orderdate)
+    ORDER BY order_year ASC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        COUNT(*) AS num_orders,
+        SUM(o.o_totalprice) AS total_amount
+    FROM orders o
+    INNER JOIN customer c ON o.o_custkey = c.c_custkey
+    INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+    INNER JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'EUROPE'
+      AND c.c_mktsegment = 'AUTOMOBILE'
+      AND EXTRACT(MONTH FROM o.o_orderdate) = 12
+    GROUP BY EXTRACT(YEAR FROM o.o_orderdate)
+    ORDER BY order_year ASC;
+  tables_used:
+  - orders
+  - customer
+  - nation
+  - region
+  executed: true
+  llm_sql_query_changed: false
+  rows: 6
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.11
+  duration_llm: 1.6
+  prompt_tokens: 1918
+  completion_tokens: 147
+  total_tokens: 2065
+  cost_input_EUR: 0.000249
+  cost_output_EUR: 7.3e-05
+  cost_total_EUR: 0.000323
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 10
+  user_question: |
+    List customer data and his account balance for customers that have placed more than 10 orders and whose individual account balance is greater than 6000.
+    Count the number of orders per customer too, order the data by customer name.
+  sql_query: |
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name    AS customer_name,
+        COUNT(o.o_orderkey) AS num_orders,
+        c.c_acctbal AS account_balance
+    FROM customer c
+    JOIN orders o ON c.c_custkey = o.o_custkey
+    GROUP BY c.c_custkey, c.c_name, c.c_acctbal
+    HAVING COUNT(o.o_orderkey) > 10 AND c.c_acctbal > 6000
+    ORDER BY customer_name ASC;
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        c.c_acctbal AS account_balance,
+        COUNT(o.o_orderkey) AS num_orders
+    FROM customer c
+    INNER JOIN orders o ON c.c_custkey = o.o_custkey
+    GROUP BY c.c_custkey, c.c_name, c.c_acctbal
+    HAVING COUNT(o.o_orderkey) > 10 AND c.c_acctbal > 6000
+    ORDER BY c.c_name;
+  tables_used:
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 255868
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.3
+  duration_llm: 1.33
+  prompt_tokens: 1839
+  completion_tokens: 112
+  total_tokens: 1951
+  cost_input_EUR: 0.000239
+  cost_output_EUR: 5.6e-05
+  cost_total_EUR: 0.000295
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 11
+  user_question: |
+    Which part types are most commonly sold by quantity, and how many units have been sold for each?
+    List only the first 15 part types and order the data by quantity sold descending.
+  sql_query: |
+    SELECT
+        p.p_type AS part_type,
+        SUM(l.l_quantity) AS total_quantity
+    FROM part p
+    JOIN lineitem l ON p.p_partkey = l.l_partkey
+    GROUP BY p.p_type
+    ORDER BY total_quantity DESC
+    LIMIT 15;
+  llm_sql_query: |-
+    SELECT
+        p.p_type AS part_type,
+        SUM(l.l_quantity) AS total_quantity
+    FROM
+        lineitem l
+    INNER JOIN
+        part p ON l.l_partkey = p.p_partkey
+    GROUP BY
+        p.p_type
+    ORDER BY
+        total_quantity DESC
+    LIMIT 15;
+  tables_used:
+  - part
+  - lineitem
+  executed: true
+  llm_sql_query_changed: false
+  rows: 15
+  columns: 2
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 3.21
+  duration_llm: 1.1
+  prompt_tokens: 2029
+  completion_tokens: 66
+  total_tokens: 2095
+  cost_input_EUR: 0.000264
+  cost_output_EUR: 3.3e-05
+  cost_total_EUR: 0.000297
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 12
+  user_question: |
+    How many orders had a total price above 100000 and were placed before 1995 per year?
+    Return the number of orders and the order year. Order by year ascending.
+  sql_query: |
+    SELECT
+        YEAR(o_orderdate) AS order_year,
+        COUNT(*) AS num_orders
+    FROM orders
+    WHERE o_totalprice > 100000
+      AND o_orderdate < '1995-01-01'
+    GROUP BY YEAR(o_orderdate)
+    ORDER BY order_year ASC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o_orderdate) AS order_year,
+        COUNT(*) AS num_orders
+    FROM orders
+    WHERE o_totalprice > 100000
+      AND o_orderdate < '1995-01-01'
+    GROUP BY EXTRACT(YEAR FROM o_orderdate)
+    ORDER BY order_year ASC;
+  tables_used:
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 3
+  columns: 2
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.14
+  duration_llm: 1.02
+  prompt_tokens: 1731
+  completion_tokens: 68
+  total_tokens: 1799
+  cost_input_EUR: 0.000225
+  cost_output_EUR: 3.4e-05
+  cost_total_EUR: 0.000259
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 13
+  user_question: |
+    Which customers placed orders in both 1994 and 1995?
+    For each, return the number of orders placed in 1994 and the number in 1995.
+    Show one row per customer. Order the results by customer name ascending
+  sql_query: |
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name    AS customer_name,
+        SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) AS num_orders_1994,
+        SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) AS num_orders_1995
+    FROM customer c
+    JOIN orders o ON c.c_custkey = o.o_custkey
+    GROUP BY c.c_custkey, c.c_name
+    HAVING SUM(CASE WHEN YEAR(o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
+       AND SUM(CASE WHEN YEAR(o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
+    ORDER BY customer_name ASC;
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        SUM(CASE WHEN EXTRACT(YEAR FROM o.o_orderdate) = 1994 THEN 1 ELSE 0 END) AS num_orders_1994,
+        SUM(CASE WHEN EXTRACT(YEAR FROM o.o_orderdate) = 1995 THEN 1 ELSE 0 END) AS num_orders_1995
+    FROM customer c
+    INNER JOIN orders o ON c.c_custkey = o.o_custkey
+    WHERE EXTRACT(YEAR FROM o.o_orderdate) IN (1994, 1995)
+    GROUP BY c.c_custkey, c.c_name
+    HAVING SUM(CASE WHEN EXTRACT(YEAR FROM o.o_orderdate) = 1994 THEN 1 ELSE 0 END) > 0
+       AND SUM(CASE WHEN EXTRACT(YEAR FROM o.o_orderdate) = 1995 THEN 1 ELSE 0 END) > 0
+    ORDER BY c.c_name ASC;
+  tables_used:
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 758246
+  columns: 4
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 1.98
+  duration_llm: 2.15
+  prompt_tokens: 1843
+  completion_tokens: 215
+  total_tokens: 2058
+  cost_input_EUR: 0.00024
+  cost_output_EUR: 0.000107
+  cost_total_EUR: 0.000347
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 14
+  user_question: |
+    How many orders have been made per month in year 1992 by customers in AMERICA?
+    Order by year, and month ascending.
+  sql_query: |
+    SELECT
+        YEAR(o.o_orderdate) AS order_year,
+        MONTH(o.o_orderdate) AS order_month,
+        COUNT(o.o_orderkey) AS num_orders
+    FROM orders o
+    JOIN customer c ON o.o_custkey = c.c_custkey
+    JOIN nation n ON c.c_nationkey = n.n_nationkey
+    JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'AMERICA'
+      AND YEAR(o.o_orderdate) = 1992
+    GROUP BY YEAR(o.o_orderdate), MONTH(o.o_orderdate)
+    ORDER BY order_month ASC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        EXTRACT(MONTH FROM o.o_orderdate) AS order_month,
+        COUNT(o.o_orderkey) AS num_orders
+    FROM orders o
+    INNER JOIN customer c ON c.c_custkey = o.o_custkey
+    INNER JOIN nation n ON n.n_nationkey = c.c_nationkey
+    INNER JOIN region r ON r.r_regionkey = n.n_regionkey
+    WHERE r.r_name = 'AMERICA'
+      AND EXTRACT(YEAR FROM o.o_orderdate) = 1992
+    GROUP BY order_year, order_month
+    ORDER BY order_year ASC, order_month ASC;
+  tables_used:
+  - orders
+  - customer
+  - nation
+  - region
+  executed: true
+  llm_sql_query_changed: false
+  rows: 12
+  columns: 3
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.11
+  duration_llm: 1.59
+  prompt_tokens: 1906
+  completion_tokens: 142
+  total_tokens: 2048
+  cost_input_EUR: 0.000248
+  cost_output_EUR: 7.1e-05
+  cost_total_EUR: 0.000319
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 15
+  user_question: |
+    Show the number of orders per year between 1992 and 1995, with one column per each 3-letter month abbreviation (e.g., Jan, Feb, Mar) ordered by year ascending.
+  sql_query: |
+    SELECT
+        EXTRACT(YEAR FROM o_orderdate) AS order_year,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Jan' THEN 1 ELSE 0 END) AS Jan,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Feb' THEN 1 ELSE 0 END) AS Feb,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Mar' THEN 1 ELSE 0 END) AS Mar,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Apr' THEN 1 ELSE 0 END) AS Apr,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'May' THEN 1 ELSE 0 END) AS May,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Jun' THEN 1 ELSE 0 END) AS Jun,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Jul' THEN 1 ELSE 0 END) AS Jul,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Aug' THEN 1 ELSE 0 END) AS Aug,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Sep' THEN 1 ELSE 0 END) AS Sep,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Oct' THEN 1 ELSE 0 END) AS Oct,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Nov' THEN 1 ELSE 0 END) AS Nov,
+        SUM(CASE WHEN STRFTIME(o_orderdate, '%b') = 'Dec' THEN 1 ELSE 0 END) AS Dec
+    FROM orders
+    WHERE EXTRACT(YEAR FROM o_orderdate) BETWEEN 1992 AND 1995
+    GROUP BY order_year
+    ORDER BY order_year ASC;
+  llm_sql_query: |-
+    SELECT
+        EXTRACT(YEAR FROM o_orderdate) AS order_year,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 1 THEN 1 ELSE 0 END) AS jan,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 2 THEN 1 ELSE 0 END) AS feb,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 3 THEN 1 ELSE 0 END) AS mar,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 4 THEN 1 ELSE 0 END) AS apr,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 5 THEN 1 ELSE 0 END) AS may,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 6 THEN 1 ELSE 0 END) AS jun,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 7 THEN 1 ELSE 0 END) AS jul,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 8 THEN 1 ELSE 0 END) AS aug,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 9 THEN 1 ELSE 0 END) AS sep,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 10 THEN 1 ELSE 0 END) AS oct,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 11 THEN 1 ELSE 0 END) AS nov,
+        SUM(CASE WHEN EXTRACT(MONTH FROM o_orderdate) = 12 THEN 1 ELSE 0 END) AS dec
+    FROM orders
+    WHERE o_orderdate BETWEEN '1992-01-01' AND '1995-12-31'
+    GROUP BY order_year
+    ORDER BY order_year ASC;
+  tables_used:
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 4
+  columns: 13
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 1.0
+  duration_sql: 0.09
+  duration_llm: 3.83
+  prompt_tokens: 1735
+  completion_tokens: 401
+  total_tokens: 2136
+  cost_input_EUR: 0.000226
+  cost_output_EUR: 0.0002
+  cost_total_EUR: 0.000426
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 16
+  user_question: |
+    For each customer located in the UNITED KINGDOM, compare their total spending in each quarter with the same quarter of the previous year.
+    Calculate the year-over-year percentage change and round it to two decimal places.
+    Return customer, year, quarter, total spend, and the percentage change.
+    Only include cases where the percentage change is positive.
+    List the top 20 customers by percentage growth, ordered descending.
+  sql_query: |
+    WITH customer_quarter AS (
+        SELECT
+            c.c_custkey AS customer_id,
+            c.c_name AS customer_name,
+            EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+            EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+            SUM(o.o_totalprice) AS total_amount
+        FROM customer c
+        JOIN orders o ON o.o_custkey = c.c_custkey
+        JOIN nation n ON c.c_nationkey = n.n_nationkey
+        WHERE n.n_name = 'UNITED KINGDOM'
+        GROUP BY c.c_custkey, c.c_name, EXTRACT(YEAR FROM o.o_orderdate), EXTRACT(QUARTER FROM o.o_orderdate)
+    ),
+    yoy AS (
+        SELECT
+            customer_id,
+            customer_name,
+            order_year,
+            order_quarter,
+            total_amount,
+            LAG(total_amount) OVER (
+                PARTITION BY customer_id, order_quarter
+                ORDER BY order_year
+            ) AS prev_year_amount
+        FROM customer_quarter
+    )
+    SELECT
+        customer_id,
+        customer_name,
+        order_year,
+        order_quarter,
+        total_amount,
+        CAST(
+            100.0 * (total_amount - prev_year_amount) / NULLIF(prev_year_amount, 0)
+            AS DECIMAL(10,2)
+        ) AS yoy_percent_change
+    FROM yoy
+    WHERE prev_year_amount IS NOT NULL
+      AND (total_amount - prev_year_amount) > 0
+    ORDER BY yoy_percent_change DESC
+    LIMIT 20;
+  llm_sql_query: |-
+    SELECT
+        c.c_custkey AS customer_id,
+        c.c_name AS customer_name,
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+        SUM(o.o_totalprice) AS total_amount,
+        (SUM(o.o_totalprice) - LAG(SUM(o.o_totalprice), 1) OVER (PARTITION BY c.c_custkey, EXTRACT(QUARTER FROM o.o_orderdate) ORDER BY EXTRACT(YEAR FROM o.o_orderdate))) /
+        NULLIF(LAG(SUM(o.o_totalprice), 1) OVER (PARTITION BY c.c_custkey, EXTRACT(QUARTER FROM o.o_orderdate) ORDER BY EXTRACT(YEAR FROM o.o_orderdate)), 0) * 100 AS yoy_percent_change
+    FROM customer c
+    INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+    INNER JOIN orders o ON c.c_custkey = o.o_custkey
+    WHERE n.n_name = 'UNITED KINGDOM'
+    GROUP BY c.c_custkey, c.c_name, EXTRACT(YEAR FROM o.o_orderdate), EXTRACT(QUARTER FROM o.o_orderdate)
+    QUALIFY yoy_percent_change > 0
+    ORDER BY yoy_percent_change DESC
+    LIMIT 20;
+  tables_used:
+  - customer
+  - orders
+  - nation
+  executed: true
+  llm_sql_query_changed: false
+  rows: 20
+  columns: 6
+  rows_equality: 1.0
+  columns_equality: 1.0
+  datasets_equality: 0.95
+  duration_sql: 0.56
+  duration_llm: 11.29
+  prompt_tokens: 1920
+  completion_tokens: 285
+  total_tokens: 2205
+  cost_input_EUR: 0.00025
+  cost_output_EUR: 0.000142
+  cost_total_EUR: 0.000392
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 17
+  user_question: |
+    Create a quarterly revenue pivot per region with columns Q1 through Q4, then calculate the absolute difference in revenue versus the previous quarter using LAG Function.
+    Return region, year, quarter, revenue, and delta from the previous quarter, ordered by region, year, and quarter.
+    Filter the data for orders placed between 1995 and 1997, and customers in the regions of EUROPE or AMERICA.
+  sql_query: |
+    WITH reg_qtr AS (
+        SELECT
+            r.r_regionkey AS region_id,
+            r.r_name AS region_name,
+            EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+            EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+            SUM(o.o_totalprice) AS total_amount
+        FROM region r
+        JOIN nation n ON n.n_regionkey = r.r_regionkey
+        JOIN customer c ON c.c_nationkey = n.n_nationkey
+        JOIN orders o ON o.o_custkey = c.c_custkey
+        WHERE o.o_orderdate BETWEEN DATE '1995-01-01' AND DATE '1997-12-31'
+          AND (r.r_name = 'EUROPE' OR r.r_name = 'AMERICA')
+        GROUP BY r.r_regionkey, r.r_name, EXTRACT(YEAR FROM o.o_orderdate), EXTRACT(QUARTER FROM o.o_orderdate)
+    ),
+    lag_calc AS (
+        SELECT
+            region_id,
+            region_name,
+            order_year,
+            order_quarter,
+            total_amount,
+            LAG(total_amount) OVER (
+                PARTITION BY region_id
+                ORDER BY order_year, order_quarter
+            ) AS prev_q_amount
+        FROM reg_qtr
+    )
+    SELECT
+        region_id,
+        region_name,
+        order_year,
+        order_quarter,
+        total_amount,
+        total_amount - prev_q_amount AS delta_vs_prev_q
+    FROM lag_calc
+    ORDER BY region_name, order_year, order_quarter;
+  llm_sql_query: |-
+    WITH quarterly_revenue AS (
+      SELECT
+        r.r_name AS region,
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+        SUM(o.o_totalprice) AS total_revenue
+      FROM orders o
+      INNER JOIN customer c ON o.o_custkey = c.c_custkey
+      INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+      INNER JOIN region r ON n.n_regionkey = r.r_regionkey
+      WHERE o.o_orderdate BETWEEN DATE '1995-01-01' AND DATE '1997-12-31'
+        AND r.r_name IN ('EUROPE', 'AMERICA')
+      GROUP BY r.r_name, EXTRACT(YEAR FROM o.o_orderdate), EXTRACT(QUARTER FROM o.o_orderdate)
+    )
+    SELECT
+      region,
+      order_year,
+      order_quarter,
+      total_revenue AS revenue,
+      total_revenue - LAG(total_revenue) OVER (PARTITION BY region ORDER BY order_year, order_quarter) AS delta_vs_prev_q
+    FROM quarterly_revenue
+    ORDER BY region, order_year, order_quarter;
+  tables_used:
+  - region
+  - nation
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 24
+  columns: 5
+  rows_equality: 1.0
+  columns_equality: 0.67
+  datasets_equality: 0.0
+  duration_sql: 0.22
+  duration_llm: 2.43
+  prompt_tokens: 1962
+  completion_tokens: 257
+  total_tokens: 2219
+  cost_input_EUR: 0.000255
+  cost_output_EUR: 0.000129
+  cost_total_EUR: 0.000384
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 18
+  user_question: |
+    For each region and year, determine the percentage contribution with 2 decimals of every market segment to the total number of orders.
+    Return region, year, market segment, total orders, and percent of total, ordered by region, year, and percent descending.
+  sql_query: |
+    WITH region_year_seg AS (
+        SELECT
+            r.r_regionkey AS region_id,
+            r.r_name      AS region_name,
+            YEAR(o.o_orderdate) AS order_year,
+            c.c_mktsegment AS market_segment,
+            COUNT(*) AS num_orders
+        FROM region r
+        JOIN nation n ON n.n_regionkey = r.r_regionkey
+        JOIN customer c ON c.c_nationkey = n.n_nationkey
+        JOIN orders o ON o.o_custkey = c.c_custkey
+        GROUP BY r.r_regionkey, r.r_name, YEAR(o.o_orderdate), c.c_mktsegment
+    )
+    SELECT
+        region_id,
+        region_name,
+        order_year,
+        market_segment,
+        num_orders,
+        CAST(100.0 * num_orders / SUM(num_orders) OVER (PARTITION BY region_id, order_year) AS decimal(6,2)) AS pct_of_total
+    FROM region_year_seg
+    ORDER BY region_name, order_year, pct_of_total DESC;
+  llm_sql_query: |-
+    SELECT
+        r.r_name AS region_name,
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        c.c_mktsegment AS market_segment,
+        COUNT(o.o_orderkey) AS total_orders,
+        ROUND(100.0 * COUNT(o.o_orderkey) / SUM(COUNT(o.o_orderkey)) OVER (PARTITION BY r.r_name, EXTRACT(YEAR FROM o.o_orderdate)), 2) AS percent_of_total
+    FROM region r
+    INNER JOIN nation n ON n.n_regionkey = r.r_regionkey
+    INNER JOIN customer c ON c.c_nationkey = n.n_nationkey
+    INNER JOIN orders o ON o.o_custkey = c.c_custkey
+    GROUP BY r.r_name, EXTRACT(YEAR FROM o.o_orderdate), c.c_mktsegment
+    ORDER BY r.r_name, order_year, percent_of_total DESC;
+  tables_used:
+  - region
+  - nation
+  - customer
+  - orders
+  executed: true
+  llm_sql_query_changed: false
+  rows: 175
+  columns: 5
+  rows_equality: 1.0
+  columns_equality: 0.67
+  datasets_equality: 0.0
+  duration_sql: 0.51
+  duration_llm: 2.02
+  prompt_tokens: 1930
+  completion_tokens: 185
+  total_tokens: 2115
+  cost_input_EUR: 0.000251
+  cost_output_EUR: 9.2e-05
+  cost_total_EUR: 0.000343
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 19
+  user_question: |
+    For each nation in the region of EUROPE, and for each year based on the order date, find the top 3 suppliers by total quantity supplied.
+    Include the nation, the supplier, the total quantity, and their rank.
+    Order the data by nation name, year, and ranking.
+  sql_query: |
+    WITH supplier_qty AS (
+        SELECT
+            n.n_nationkey AS nation_id,
+            n.n_name      AS nation_name,
+            s.s_suppkey AS supplier_id,
+            s.s_name    AS supplier_name,
+            YEAR(o.o_orderdate) AS order_year,
+            SUM(l.l_quantity) AS total_quantity
+        FROM supplier s
+        JOIN nation n ON n.n_nationkey = s.s_nationkey
+        JOIN lineitem l ON l.l_suppkey = s.s_suppkey
+        JOIN orders o ON o.o_orderkey = l.l_orderkey
+        JOIN customer c ON c.c_custkey = o.o_custkey
+        JOIN region r ON n.n_regionkey = r.r_regionkey
+        WHERE r.r_name = 'EUROPE'
+        GROUP BY n.n_nationkey, n.n_name, s.s_suppkey, s.s_name, YEAR(o.o_orderdate)
+    ),
+    ranked AS (
+        SELECT
+            nation_id,
+            nation_name,
+            supplier_id,
+            supplier_name,
+            order_year,
+            total_quantity,
+            DENSE_RANK() OVER (
+                PARTITION BY nation_id, order_year
+                ORDER BY total_quantity DESC
+            ) AS ranking
+        FROM supplier_qty
+    )
+    SELECT
+        nation_id,
+        nation_name,
+        supplier_id,
+        supplier_name,
+        order_year,
+        total_quantity,
+        ranking
+    FROM ranked
+    WHERE ranking <= 3
+    ORDER BY nation_name, order_year, ranking;
+  llm_sql_query: |-
+    SELECT
+        n.n_name AS nation_name,
+        s.s_name AS supplier_name,
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        SUM(l.l_quantity) AS total_quantity,
+        ROW_NUMBER() OVER (PARTITION BY n.n_name, EXTRACT(YEAR FROM o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) AS supplier_rank
+    FROM lineitem l
+    INNER JOIN supplier s ON l.l_suppkey = s.s_suppkey
+    INNER JOIN orders o ON l.l_orderkey = o.o_orderkey
+    INNER JOIN nation n ON s.s_nationkey = n.n_nationkey
+    INNER JOIN region r ON n.n_regionkey = r.r_regionkey
+    WHERE r.r_name = 'EUROPE'
+    GROUP BY n.n_name, s.s_name, EXTRACT(YEAR FROM o.o_orderdate)
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY n.n_name, EXTRACT(YEAR FROM o.o_orderdate) ORDER BY SUM(l.l_quantity) DESC) <= 3
+    ORDER BY n.n_name, order_year, supplier_rank;
+  tables_used:
+  - supplier
+  - nation
+  - lineitem
+  - orders
+  - customer
+  - region
+  executed: true
+  llm_sql_query_changed: false
+  rows: 105
+  columns: 5
+  rows_equality: 0.97
+  columns_equality: 0.71
+  datasets_equality: 0.0
+  duration_sql: 5.94
+  duration_llm: 38.33
+  prompt_tokens: 2377
+  completion_tokens: 231
+  total_tokens: 2608
+  cost_input_EUR: 0.000309
+  cost_output_EUR: 0.000115
+  cost_total_EUR: 0.000425
+- iteration: '01'
+  model_name: Llama-4-Maverick-17B-128E-Instruct-FP8
+  question_number: 20
+  user_question: |
+    Monitor price variability by calculating the standard deviation with 4 decimals of order prices for each part type, year, and quarter.
+    Return part type, year, quarter, count of the orders, and the standard deviation of prices, ordered by part type, year, and quarter ascending.
+    Include only orders placed by customers from JAPAN.
+  sql_query: |
+    WITH price_data AS (
+      SELECT
+          p.p_type AS part_type,
+          EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+          EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+          o.o_totalprice AS order_price
+      FROM orders o
+      JOIN lineitem l ON l.l_orderkey = o.o_orderkey
+      JOIN part p ON p.p_partkey = l.l_partkey
+      JOIN customer c ON c.c_custkey = o.o_custkey
+      JOIN nation n ON n.n_nationkey = c.c_nationkey
+      WHERE n.n_name = 'JAPAN'
+    )
+    SELECT
+        part_type,
+        order_year,
+        order_quarter,
+        COUNT(*) AS num_orders,
+        CAST(STDDEV_SAMP(order_price) AS DECIMAL(15,4)) AS price_stddev
+    FROM price_data
+    GROUP BY part_type, order_year, order_quarter
+    ORDER BY part_type, order_year, order_quarter;
+  llm_sql_query: |-
+    SELECT
+        p.p_type AS part_type,
+        EXTRACT(YEAR FROM o.o_orderdate) AS order_year,
+        EXTRACT(QUARTER FROM o.o_orderdate) AS order_quarter,
+        COUNT(DISTINCT o.o_orderkey) AS num_orders,
+        ROUND(STDDEV_SAMP(l.l_extendedprice), 4) AS price_stddev
+    FROM orders o
+    INNER JOIN customer c ON o.o_custkey = c.c_custkey
+    INNER JOIN nation n ON c.c_nationkey = n.n_nationkey
+    INNER JOIN lineitem l ON o.o_orderkey = l.l_orderkey
+    INNER JOIN part p ON l.l_partkey = p.p_partkey
+    WHERE n.n_name = 'JAPAN'
+    GROUP BY p.p_type, EXTRACT(YEAR FROM o.o_orderdate), EXTRACT(QUARTER FROM o.o_orderdate)
+    ORDER BY p.p_type, order_year, order_quarter;
+  tables_used:
+  - orders
+  - lineitem
+  - part
+  - customer
+  - nation
+  executed: true
+  llm_sql_query_changed: false
+  rows: 4050
+  columns: 5
+  rows_equality: 1.0
+  columns_equality: 0.6
+  datasets_equality: 0.0
+  duration_sql: 2.58
+  duration_llm: 1.97
+  prompt_tokens: 2367
+  completion_tokens: 195
+  total_tokens: 2562
+  cost_input_EUR: 0.000308
+  cost_output_EUR: 9.7e-05
+  cost_total_EUR: 0.000405

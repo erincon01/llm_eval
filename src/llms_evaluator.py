@@ -23,10 +23,12 @@ class LLMsEvaluator:
         semantic_rules_file_name=None,
         system_message_file_name=None,
         models_file_name=None,
+        data_source=None,
     ):
 
         load_dotenv()
 
+        self.data_source = data_source
         self.questions_file_name = questions_file_name
         self.db_schema_file_name = db_schema_file_name
         self.semantic_rules_file_name = semantic_rules_file_name
@@ -119,6 +121,7 @@ class LLMsEvaluator:
             log_results=log_results,
             log_summary=log_summary,
             iteration=iteration,
+            data_source=self.data_source,
         )
 
     def execute_queries(
@@ -128,10 +131,14 @@ class LLMsEvaluator:
         results_to_path: str,
         persist_results: bool = True,
         drop_results_if_exists: bool = False,
+        data_source: str = None,
     ):
         """
         Run the SQL queries from the questions file and export the results to CSV files.
         """
+        if data_source is None:
+            data_source = self.data_source
+            
         return self.baseline_executor.execute_queries(
             questions=self.all_questions,
             sql_query_column=sql_query_column,
@@ -140,6 +147,7 @@ class LLMsEvaluator:
             persist_results=persist_results,
             drop_results_if_exists=drop_results_if_exists,
             questions_file_name=self.questions_file_name,
+            database_source=data_source,
         )
 
     def load_baseline_datasets(self, baseline_path: str):

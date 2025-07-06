@@ -26,6 +26,7 @@ class ModelEvaluator:
         log_results=True,
         log_summary=True,
         iteration="",
+        data_source=None,
     ):
         """
         Iterate each model and execute each sql question.
@@ -43,6 +44,7 @@ class ModelEvaluator:
         :param log_results: If True, the results will be saved to YAML files.
         :param log_summary: If True, a summary file will be created with the results.
         :param iteration: Iteration identifier.
+        :param data_source: The database source to execute the queries against.
         :return: files_generated: List of generated files,
                 summary_text: Summary of the processing with the model.
         """
@@ -122,6 +124,7 @@ class ModelEvaluator:
                 temperature=temperature,
                 max_tokens=10000,
                 iteration=iteration,
+                data_source=data_source,
             )
 
             if log_results:

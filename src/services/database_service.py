@@ -4,6 +4,7 @@ import traceback
 import urllib.parse
 
 import pandas as pd
+import duckdb
 from langfuse import observe
 from sqlalchemy import create_engine
 
@@ -21,22 +22,36 @@ class DatabaseService:
         Execute dynamic SQL query on specified database source.
 
         Args:
-            source (str): The source of the database. Either "azure-sql", or "onprem-sql".
+            source (str): The source of the database. 
+                         Supports "sql-server", "duckdb".
             sql_query (str): The SQL query to execute.
             as_data_frame (bool): If True, the result is returned as a pandas DataFrame.
         Returns:
             str or pd.DataFrame: The result as a string or DataFrame.
         Raises:
-            RuntimeError: If there is an error connecting to or executing the query in the database.
+            RuntimeError: If there is an error connecting to or executing 
+                         the query in the database.
         """
         try:
             conn = self.get_connection(source)
-            df = pd.read_sql(sql_query, conn)
+            source = self.decode_source(source)
 
-            if as_data_frame:
-                return df
+            if source in ["duckdb"]:
+                # Handle DuckDB connections
+                if as_data_frame:
+                    df = conn.execute(sql_query).df()
+                    return df
+                else:
+                    df = conn.execute(sql_query).df()
+                    return df.to_string(index=False)
             else:
-                return df.to_string(index=False)
+                # Handle SQL Server connections (existing code)
+                df = pd.read_sql(sql_query, conn)
+                
+                if as_data_frame:
+                    return df
+                else:
+                    return df.to_string(index=False)
 
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
@@ -61,18 +76,19 @@ class DatabaseService:
         Returns:
             str: Normalized source name
         """
-        if source.lower() == "azuresql" or source.lower() == "azure-sql":
-            return "azure-sql"
-        if source.lower() == "onpremsql" or source.lower() == "onprem-sql":
-            return "onprem-sql"
-        return source.lower()
+        sources = {
+            "sql-server": "sql-server",
+            "duckdb": "duckdb",
+        }
+        return sources.get(source.lower(), source.lower())
 
-    def execute_sql_query(self, sql_query: str):
+    def execute_sql_query(self, sql_query: str, source: str):
         """
         Execute SQL query and return results with metadata.
 
         Args:
             sql_query (str): SQL query to execute
+            source (str): Database source identifier (e.g., "sql-server", "duckdb")
 
         Returns:
             tuple: (df, executed, rows, columns, duration_sql)
@@ -91,7 +107,7 @@ class DatabaseService:
         if sql_query:
             try:
                 t = time.time()
-                df = self.get_dynamic_sql("azure-sql", sql_query, True)
+                df = self.get_dynamic_sql(source, sql_query, True)
                 duration_sql = time.time() - t
                 if df is not None:
                     rows = len(df)
@@ -118,7 +134,7 @@ class DatabaseService:
             source (str): Database source identifier
 
         Returns:
-            sqlalchemy.engine.Engine: Database connection engine
+            sqlalchemy.engine.Engine or duckdb.DuckDBPyConnection: Database connection
 
         Raises:
             RuntimeError: If connection fails
@@ -126,34 +142,37 @@ class DatabaseService:
         source = self.decode_source(source)
         engine = None
 
-        if source == "azure-sql":
-            server = os.getenv("DB_SERVER_AZURE")
-            database = os.getenv("DB_NAME_AZURE")
-            username = os.getenv("DB_USER_AZURE")
-            password = os.getenv("DB_PASSWORD_AZURE")
+        if source == "sql-server":
+            server = os.getenv("SQL_SERVER")
+            database = os.getenv("SQL_SERVER_DATABASE")
+            username = os.getenv("SQL_SERVER_USERNAME")
+            password = os.getenv("SQL_SERVER_PASSWORD")
             password = urllib.parse.quote_plus(password)
 
-        elif source == "onprem-sql":
-            server = os.getenv("DB_SERVER_ONPREM")
-            database = os.getenv("DB_NAME_ONPREM")
-            username = os.getenv("DB_USER_ONPREM")
-            password = os.getenv("DB_PASSWORD_ONPREM")
-            password = urllib.parse.quote_plus(password)
+            connection_string = (
+                f"mssql+pyodbc://{username}:{password}@{server}/{database}"
+                "?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+            )
 
-        # Usando pyodbc para generar la cadena de conexión adecuada
-        connection_string = (
-            f"mssql+pyodbc://{username}:{password}@{server}/{database}"
-            "?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-        )
-        engine = create_engine(connection_string)
+        elif source == "duckdb":
+            # File-based DuckDB
+            db_path = os.getenv("DUCKDB_PATH", "./data/tpch.db")
+            return duckdb.connect(db_path)
 
-        # tries to conect to the server to warm up [for sql azure serverless]
-        try:
-            _ = pd.read_sql("SELECT @@servername", engine)
-        except Exception:
+        else:
+            raise ValueError(f"Unsupported database source: {source}")
+
+        # For SQL sources, create SQLAlchemy engine
+        if source in ["sql-server"]:
+            engine = create_engine(connection_string)
+
+            # tries to conect to the server to warm up [for sql azure serverless]
             try:
                 _ = pd.read_sql("SELECT @@servername", engine)
-            except Exception as e:
-                raise RuntimeError("Error connecting to the Azure SQL database.") from e
+            except Exception:
+                try:
+                    _ = pd.read_sql("SELECT @@servername", engine)
+                except Exception as e:
+                    raise RuntimeError("Error connecting to the SQL database.") from e
 
         return engine

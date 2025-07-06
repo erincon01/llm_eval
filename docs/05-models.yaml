@@ -1,6 +1,6 @@
 models_configs:
   - id: MSDN_CORP
-    enabled: true
+    enabled: false
     models:
       - name: DeepSeek-V3-0324
         cost_input_tokens_EUR_1K:  0.00114
@@ -19,7 +19,7 @@ models_configs:
         cost_output_tokens_EUR_1K: 0.00127
 
   - id: MSDN_ALT
-    enabled: true
+    enabled: false
     models:
       - name: Phi-3-medium-128k-instruct
         cost_input_tokens_EUR_1K:  0.00015
@@ -36,7 +36,7 @@ models_configs:
         cost_output_tokens_EUR_1K: 0.00160
 
   - id: AZURE_CUSTOM
-    enabled: true
+    enabled: false
     models:
       - name: Llama-3.3-70B-Instruct
         cost_input_tokens_EUR_1K:  0.00600

@@ -2,37 +2,38 @@ import time
 import argparse
 from llms_evaluator import LLMsEvaluator
 from utils.reporting_utils import performance_report
+import os
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run LLM evaluation.")
     parser.add_argument(
         "--questions_file_name",
         type=str,
-        default="./docs/01-questions.yaml",
+        default=os.getenv("QUESTIONS", None),
         help="Path to the questions YAML file.",
     )
     parser.add_argument(
         "--db_schema_file_name",
         type=str,
-        default="./docs/02-database_schema.yaml",
+        default=os.getenv("DATABASE_SCHEMA", None),
         help="Path to the database schema YAML file.",
     )
     parser.add_argument(
         "--semantic_rules_file_name",
         type=str,
-        default="./docs/03-semantic-rules.md",
+        default=os.getenv("SEMANTIC_RULES", None),
         help="Path to the semantic rules Markdown file.",
     )
     parser.add_argument(
         "--system_message_file_name",
         type=str,
-        default="./docs/04-system_message.md",
+        default=os.getenv("SYSTEM_MESSAGE", None),
         help="Path to the system message Markdown file.",
     )
     parser.add_argument(
         "--models_file_name",
         type=str,
-        default="./docs/05-models.yaml",
+        default=os.getenv("MODELS", None),
         help="Path to the models configuration YAML file.",
     )
     parser.add_argument(
@@ -44,7 +45,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--get_baseline_from_data_source",
         action="store_true",
-        help="Run step 1 to get baseline resultsets from the data source.",
+        help="Run step 1 to get resultsets from the data source.",
+    )
+    parser.add_argument(
+        "--data_source",
+        type=str,
+        default=os.getenv("DATA_SOURCE", None),
+        choices=["sql-server", "duckdb"],
+        help="Data source to use for evaluation.",
     )
     args = parser.parse_args()
 
@@ -54,6 +62,7 @@ if __name__ == "__main__":
         semantic_rules_file_name=args.semantic_rules_file_name,
         system_message_file_name=args.system_message_file_name,
         models_file_name=args.models_file_name,
+        data_source=args.data_source,
     )
 
     temperature = 0.9
@@ -64,8 +73,8 @@ if __name__ == "__main__":
     if args.get_baseline_from_data_source:
         evaluator.execute_queries(
             sql_query_column="sql_query",
-            summary_file_name="questions_baseline_summary.csv",
-            results_to_path=results_path + "/baseline_dataset",
+            summary_file_name="questions_baseline_summary_" + args.data_source + ".csv",
+            results_to_path=results_path + "/baseline_dataset_" + args.data_source,
             persist_results=True,
             drop_results_if_exists=True,
         )
@@ -73,7 +82,7 @@ if __name__ == "__main__":
     # STEP 2: load the dataframes with the resultsets to compare
     # with the results retrieved
     # from the queries builts with each LLM
-    evaluator.load_baseline_datasets(results_path + "/baseline_dataset")
+    evaluator.load_baseline_datasets(results_path + "/baseline_dataset_" + args.data_source)
 
     # STEP 3: n iterations of the LLM to generate the SQL queries
 
@@ -89,7 +98,7 @@ if __name__ == "__main__":
         output_files, summary_text = evaluator.evaluate_models(
             temperature,
             results_to_path=results_path,
-            file_name_prefix=f"results_llm_{i_str}",
+            file_name_prefix=f"results_llm_{i_str}_" + args.data_source,
             log_results=True,
             log_summary=True,
             iteration=i_str,
@@ -110,16 +119,10 @@ if __name__ == "__main__":
 
         print("---\n")
 
-    # STEP 3: files consolidation [optional step]
-    # optional steps to consolidate files.
-
-    # results_path = "./docs/results"
-    # consolidate_files_by_iteration(results_path=results_path,
-    # file_name_prefix="results_llm_")
-
-    # STEP 4: performance report
+    # STEP 3: performance report
 
     performance_report(
         results_path=results_path,
         file_name_prefix="questions_summary_results_llm",
+        data_source=args.data_source,
     )

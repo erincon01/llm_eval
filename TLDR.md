@@ -1,7 +1,8 @@
-
 # TLDR: Evaluating LLMs for Custom Business Questions
 
-Ranking of the models based on the total cost, LLM time and source rows equality:
+Ranking of the models based on the total cost, LLM time and source rows equality.
+This is a sample result with real questions and models running on a SQL Server database.
+Price values are in EUR per 1K tokens, as of June 2025.
 
 | model                                  | rank_quality   | rank_time   | rank_price   |
 |:---------------------------------------|:---------------|:------------|:-------------|
@@ -22,7 +23,6 @@ Ranking of the models based on the total cost, LLM time and source rows equality
 | Llama-3.3-70B-Instruct                 |                |             |              |
 | claude-3-7-sonnet-20250219             |                |             |              |
 
-
 ## Introduction
 
 This guide describes the process for evaluating the ability of various Large Language Models (LLMs) to answer custom business questions over your database using automated, reproducible workflows. By providing your own questions, database schema, and precise SQL and semantic rules, you can benchmark and compare LLMs in terms of code generation quality, compliance with standards, and operational costs.
@@ -31,9 +31,11 @@ The procedure involves defining your input files (questions, schema, rules, and 
 
 No prior results are necessary; simply follow the steps to execute the evaluation with your custom inputs.
 
-## 1 - Define your user questions to measure in natural language
+## Example: Evaluating a Business Question
 
-````yaml
+### Step 1 - Define your user question
+
+```yaml
 questions:
   - question_number: 1
     user_question: |
@@ -54,94 +56,66 @@ questions:
     tables_used:
       - "customer"
       - "orders"
-
-  - question_number: 2
-    user_question: |
-    sql_query: |
-    tables_used:
-
-  - question_number: n
-
-````
-
-## 2 - Set your database schema
-
-````yaml
-tables:
-  - name: "region"
-    script: |
-      create table region (
-          r_regionkey integer not null,
-          r_name char(25) not null,
-          r_comment varchar(152),
-          primary key (r_regionkey)
-      );
-
-  - name: "nation"
-    script: |
-      create table nation (
-          n_nationkey integer not null,
-          n_name char(25) not null,
-          n_regionkey integer not null,
-          n_comment varchar(152),
-          primary key (n_nationkey)
-      );
-````
-
-## 3 - Set your semantic rules
-
-````markdown
-## CODING RULES  
-• Include **id + name** for every entity mentioned; drop whole blocks else.  
-• columns order: Entity_blocks, Time, Metrics
-• Preserve column order exactly.  
-• Use snake_case aliases; SQL keywords UPPER.  
-• `GROUP BY` every non-aggregated canonical column.  
-• Map: `COUNT(*)`→num_orders, `SUM(o_totalprice)`→total_amount.  
-• New metrics: alias + append after existing ones.  
-• Ensure the query runs without alias/group errors.
-
-## TRANSACT-SQL RULES
-• The coding language is Transact-SQL, TSQL, from Microsoft SQL Server
-• This is Transact-SQL. Do not use LIMIT. Use TOP or OFFSET-FETCH instead to limit results.
-• Use `OVER` clauses for running totals instead of self-joins.
-• Use `CROSS APPLY` to unpivot inline calculations.
-• Avoid using `SELECT *`; be explicit with columns.
-````
-
-## 4 - Select your LLM models to evaluate
-
-```yaml
-models_configs:
-  - id: MSDN_CORP
-    enabled: true
-    models:
-      - name: DeepSeek-V3-0324
-        cost_input_tokens_EUR_1K:  0.00114
-        cost_output_tokens_EUR_1K: 0.00456
-      - name: gpt-4o
-        cost_input_tokens_EUR_1K:  0.00250
-        cost_output_tokens_EUR_1K: 0.01000
-      - name: gpt-4o-mini
-        cost_input_tokens_EUR_1K:  0.00015
-        cost_output_tokens_EUR_1K: 0.00060
-      - name: grok-3
-        cost_input_tokens_EUR_1K:  0.00300
-        cost_output_tokens_EUR_1K: 0.01500
-      - name: grok-3-mini
-        cost_input_tokens_EUR_1K:  0.00025
-        cost_output_tokens_EUR_1K: 0.00127
 ```
 
-## 5 - Run the evaluation script
+### Step 2 - Set your database schema
+
+```yaml
+tables:
+  - name: "customer"
+    script: |
+      create table customer (
+          c_custkey integer not null,
+          c_name varchar(25) not null,
+          c_mktsegment varchar(10),
+          primary key (c_custkey)
+      );
+
+  - name: "orders"
+    script: |
+      create table orders (
+          o_orderkey integer not null,
+          o_custkey integer not null,
+          o_orderdate date not null,
+          o_totalprice decimal(15,2),
+          primary key (o_orderkey),
+          foreign key (o_custkey) references customer(c_custkey)
+      );
+```
+
+### Step 3 - Run the evaluation script
 
 ```bash
 python ./src/main_evaluation.py ^
-    --questions_file_name ./docs/01-questions.yaml ^
+    --questions_file_name ./docs/01-questions-sql-server.yaml ^
     --db_schema_file_name ./docs/02-database_schema.yaml ^
-    --semantic_rules_file_name ./docs/03-semantic-rules.md ^
-    --system_message_file_name ./docs/04-system_message.md ^
+    --semantic_rules_file_name ./docs/03-semantic-rules-sql-server.md ^
+    --system_message_file_name ./docs/04-system_message-sql-server.md ^
     --models_file_name ./docs/05-models.yaml ^
     --iterations 1 ^
-    --get_baseline_from_data_source
+    --get_baseline_from_data_source ^
+    --data_source_name "sql-server"
 ```
+
+### Step 4 - Review the results
+
+Results are printed to the console and saved in a structured format, allowing you to compare the performance of different models based on criteria such as code quality, execution time, and cost efficiency.
+
+See files:
+
+- `./docs/results/performance_report-sql-server.txt` where summarize by:
+  - performance report per model.
+  - performance report per model.
+  - Best models based on average LLM time.
+  - Best models based on mean token cost.
+  - Best models based on average datasets equality.
+  - Ranking of the models based on the total cost, LLM time and source rows equality.
+
+- `./docs/results/performance_report-sql-server.csv`
+  - CSV file with metrics for each model aggregated.
+
+- `./docs/results/results_llm_01_sql-server_claude-3-5-sonnet-20241022_20250629_1912.yaml`
+- `./docs/results/results_llm_01_sql-server_gpt-4o_20250629_1912.yaml`
+- `./docs/results/results_llm_01_sql-server_gpt-4.1_20250629_1912.yaml`
+  - YAML file with detailed results for each model, query, and several metrics.
+  

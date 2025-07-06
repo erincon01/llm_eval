@@ -31,20 +31,22 @@ This diagram illustrates how the user interacts with the YAML files to define te
 
 ## 📝 Testing Procedure Overview
 
-
 ### 1️⃣  | **Define Test Configuration**
+
+Determine the data source to run the tests. Currently, the framework support as data sources `sql-server`, and `duckdb`.
 
 Start by specifying which models, questions, and datasets you want to evaluate. Edit the relevant YAML files in the `results` directory:
 
-- **`01-questions.yaml`**: Add or update questions, including their IDs, text, and expected outputs.
+- **`01-questions-{data-source}.yaml`**: Add or update questions, including their IDs, text, and expected outputs.
 
-enumerate the questions you want to test. You need to provide:
+Enumerate the questions you want to test. You need to provide:
 
-- the user question in natural language,
-- the SQL query that you expect to be generated,
-- the tables used in the query.
+- The user question in natural language.
+- The SQL query that you expect to be generated.
+- The tables used in the query.
 
-Example of a question definition in `01-questions.yaml`:
+Example of a question definition in `01-questions-{data-source}.yaml`:
+
 ```yaml
   - question_number: 1
     user_question: |
@@ -67,11 +69,10 @@ Example of a question definition in `01-questions.yaml`:
       - "orders"
 ```
 
-- **`02-database_schema.yaml`**: Ensure the database schema matches your test requirements.
-
-This file should include the database schema used for the queries. It is good for the model to include the primary keys, constraints, and foreign keys of the tables used in the queries.
+- **`02-database_schema.yaml`**: Ensure the database schema matches your test requirements. This file should include the database schema used for the queries. It is good for the model to include the primary keys, constraints, and foreign keys of the tables used in the queries.
 
 Example of a database schema definition in `02-database_schema.yaml`:
+
 ```yaml
 tables:
   - name: "region"
@@ -94,32 +95,31 @@ tables:
       );
 ```
 
+- **`03-semantic-rules-{data-source}.yaml`**: Define or refine rules for evaluating the correctness of model responses.
 
-- **`03-semantic-rules.yaml`**: Define or refine rules for evaluating the correctness of model responses.
+This data goes to the system message used in the LLM calls. This is the place to influence the model on best practices, coding standards, and specific SQL dialects. Text is free-form, markdown is fantastic for LLMs. This text is sensible to your data source; for example, if you are using `sql-server`, make sure the SQL language you ask is Transact-SQL (T-SQL) compliant. Same applies for language rules; for example, duckdb do not have support for `CONVERT` function, so you should not ask the model to use it.
 
-This data goes to the system message used in the LLM calls. This is the place to influence the model on best practices, coding standards, and specific SQL dialects. Text is free-form, markdonw is fantastic for LLMs.
+Example of semantic rules in `03-semantic-rules-sql-server.yaml`:
 
-Example of semantic rules in `03-semantic-rules.yaml`:
 ```yaml
 ## CODING RULES  
 • Include **id + name** for every entity mentioned; drop whole blocks else.  
-• columns order: Entity_blocks, Time, Metrics
+• Columns order: Entity_blocks, Time, Metrics
 • Preserve column order exactly.  
 • Use snake_case aliases; SQL keywords UPPER.  
 • `GROUP BY` every non-aggregated canonical column.  
 • Map: `COUNT(*)`→num_orders, `SUM(o_totalprice)`→total_amount.  
 • New metrics: alias + append after existing ones.  
 • Ensure the query runs without alias/group errors.
-
-
 ```
 
-- **`04-system_message.yaml`**: Adjust system-level prompts or instructions as needed.
+- **`04-system_message-{data-source}.yaml`**: Adjust system-level prompts or instructions as needed.
 - **`05-models.yaml`**: Select which models to test and configure their settings (e.g., enable/disable, cost parameters).
 
-This file contains the list of models to be tested. You can add new models or modify existing ones. Each model should have a name, description, and cost parameters.
+This file contains the list of models to be tested. You can add new models or modify existing ones. Each model should have a name, cost parameters, and optionally `enabled: true|false`; if missing, `enabled: true`.
 
 Example of a model definition in `05-models.yaml`:
+
 ```yaml
 models_configs:
   - id: MSDN_CORP
@@ -134,8 +134,8 @@ models_configs:
       - name: gpt-4o-mini
 ```
 
-The model endpoint, and the api key must be added to the `.env` file.
-If you named the model as MSDN_CORP, you should add the following lines to your `.env` file:
+The model endpoint and the API key must be added to the `.env` file.
+If you named the model as MSDN_CORP, you should add these lines to your `.env` file:
 
 ```plaintext
 ENDPOINT_MSDN_CORP=https://api.example.com/v1/models
@@ -148,17 +148,20 @@ Run the provided test scripts to evaluate your configurations. These scripts wil
 
 - Process your YAML definitions.
 - Interact with the selected models.
-- Collect performance metrics and generate result files (e.g., `results_llm_[iter]_{model_name}.yaml` and `performance_report.txt`).
+- Collect performance metrics and generate result files (e.g., `results_llm_{iter}_{data_source}_{model_name}.yaml` and `performance_report_{data_source}.txt`).
 
 ### 3️⃣  | **Analyze Results**
 
 Review the generated reports to assess model performance:
 
 - Examine the YAML result files for detailed metrics on each query and model.
-- Use `performance_report.txt` to compare models across key metrics such as accuracy, speed, and cost.
+- Use `performance_report_{data_source}.txt` to compare models across key metrics such as accuracy, speed, and cost.
 - Identify strengths, weaknesses, and areas for improvement based on the data.
 
-By following these steps, you can systematically evaluate and improve your language models.
+For deepeer analysis, you have these options:
+
+- use the `questions_summary_results_llm_{iter}_{data_source}_{timestamp}.csv` file that includes the aggegrated metrics per iteration in .csv format (good to load into Excel).
+- use the `results_llm_{iter}_{data_source}_{model_mane}_{timestamp}.yaml` files that logs the results for each question executed.
 
 ---
 
@@ -167,14 +170,15 @@ By following these steps, you can systematically evaluate and improve your langu
 After running tests, results appear in the `results` directory. These include:
 
 #### Generated YAML Files
+
 | File | Description |
 |------|-------------|
-| `results_llm_[iter]_{model_name}.yaml` | Contains detailed results for each model tested. Each file includes metrics such as execution time, token usage, and accuracy for the queries executed. |
+| `results_llm_{iter}_{data_source}_{model_name}.yaml` | Contains detailed results for each model tested. Each file includes metrics such as execution time, token usage, and accuracy for the queries executed. |
 
 #### Columns in the Results
+
 The generated YAML files include the following columns:
 
-Columns in the Results
 | Column Name           | Description                                                                                  |
 |-----------------------|----------------------------------------------------------------------------------------------|
 | `iteration`           | Iteration number of the test.                                                                |
@@ -202,7 +206,7 @@ Columns in the Results
 
 These files provide granular insights into the performance of each model, enabling detailed analysis and comparison.
 
-### 🏅 Performance Report (`performance_report.txt`)
+### 🏅 Performance Report (`performance_report_{data_source}.txt`)
 
 | Section | Metrics |
 |---------|---------|
@@ -213,9 +217,10 @@ These files provide granular insights into the performance of each model, enabli
 
 ### 📈 Understanding the Sample Performance Report
 
-The `performance_report.txt` file provides detailed metrics for each model and query. Here’s how to interpret the data:
+The `performance_report_{data_source}.txt` file provides detailed metrics for each model and query. Here’s how to interpret the data:
 
 #### Per Model Analysis
+
 | Metric | Explanation |
 |--------|-------------|
 | **`queries_executed`** | Number of queries executed for the model. Higher values indicate more comprehensive testing. |
@@ -226,10 +231,12 @@ The `performance_report.txt` file provides detailed metrics for each model and q
 | **`mean_cost_EUR`** | Average cost per query in Euros. Lower costs are ideal for budget-conscious projects. |
 
 **Example:**
+
 - `DeepSeek-V3-0324` has a low cost (`€0.002916`) and high accuracy (`0.77`), making it a cost-effective choice.
 - `Llama-3.3-70B-Instruct` has high accuracy (`0.67`) but is expensive (`€0.011145`) and slow (`28.38s mean LLM time`).
 
 #### Per Query Analysis
+
 | Metric | Explanation |
 |--------|-------------|
 | **`mean_llm_time`** | Average time taken by the model for each query. Lower values are better for responsiveness. |
@@ -237,32 +244,21 @@ The `performance_report.txt` file provides detailed metrics for each model and q
 | **`mean_rows_equality`** and **`mean_columns_equality`** | Metrics for row and column-level accuracy. Useful for understanding granular correctness. |
 
 **Example:**
+
 - Query `1` has high accuracy (`0.94`) and low response time (`3.38s`), making it ideal for real-time use.
 - Query `5` has low accuracy (`0`) and high response time (`6.06s`), indicating potential issues with the model or dataset.
 
 #### Best Models
+
 The report highlights the best-performing models based on average LLM time and other metrics. For example:
+
 - `gpt-4.1` has a low mean LLM time (`1.84s`) and high accuracy (`0.85`), making it a strong candidate for real-time applications.
 - `grok-3-mini` has a high mean LLM time (`16.49s`) but low cost (`€0.000662`), which might be suitable for batch processing.
 
 ### Decision-Making Tips
+
 1. **Real-Time Applications**: Prioritize models with low `mean_llm_time` and high `mean_datasets_equality`.
 2. **Cost Efficiency**: Look for models with low `mean_cost_EUR` and acceptable accuracy.
 3. **Batch Processing**: Consider models with higher response times but lower costs for non-time-sensitive tasks.
 
 By analyzing these metrics, you can select the models that best fit your project’s requirements and constraints.
-
----
-
-## 🛠️ Steps to Create Your Own Tests
-
-| Step | Action |
-|------|--------|
-| 1️⃣ | **Edit YAML Files**<br>- Add questions to `01-questions.yaml`<br>- Update schema in `02-database_schema.yaml`<br>- Define rules in `03-semantic-rules.yaml`<br>- Modify messages in `04-system_message.yaml`<br>- Add/update models in `05-models.yaml` |
-| 2️⃣ | **Run Tests**<br>Use provided scripts to execute and generate results. |
-| 3️⃣ | **Analyze Results**<br>Check `performance_report.txt` for insights.<br>Compare metrics to find strengths and weaknesses. |
-
----
-
-By following these steps, you’ll tailor the testing process to your needs and unlock valuable insights into your models’ performance! 🎯
-

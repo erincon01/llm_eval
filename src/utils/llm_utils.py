@@ -29,7 +29,7 @@ def get_chat_completion_from_platform(
     Retrieves a chat completion from Azure OpenAI API.
     Args:
         platform (str): The platform to use for generating chat completions.
-            Either "azure_openai" or "deepseek". deepseek is deprecated.
+            Either "azure_openai" or "anthropic".
         If the model starts with "claude-", it will use the Anthropic API.
         model (str): The model to use for generating chat completions.
         system_message (str): The system message.
@@ -221,7 +221,7 @@ def get_chat_completion_from_platform(
 
         except Exception as e:
             tb = traceback.format_exc()
-            return f"Error retrieving chat completion from DeepSeek API: {str(e)}\n{tb}"
+            return f"Error retrieving chat completion from Anthropic API: {str(e)}\n{tb}"
 
     if endpoint is None or api_key is None or model is None:
         raise ValueError("Please set the relevant platform environment variables.")

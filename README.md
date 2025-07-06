@@ -29,25 +29,28 @@ To run this project, ensure the following dependencies are installed:
 The application supports multiple database sources:
 
 1. **SQL Azure Database or SQL Server OnPrem** (`sql-server`)
-3. **DuckDB File** (`duckdb`)
+2. **DuckDB File** (`duckdb`)
 
 #### DuckDB Setup
 
 To use DuckDB with TPCH sample data:
 
-```bash
-# Set up TPCH sample data
-python scripts/setup_duckdb.py
+1. Download the TPCH database files from the DuckDB documentation.
+https://duckdb.org/docs/stable/core_extensions/tpch.html
 
+1. Run the setup_duckdb.py script to create the baseline results:
+
+```bash
+# Run the TPCH queries to populate the baseline files:
+python scripts/setup_duckdb.py
+```
+
+1. Adjust the relevant parameters in the `.env` file to point to the DuckDB database file:
+
+```bash
 # Set environment variable
 DUCKDB_PATH="./docs/tpch-sf10.db"
 ```
-
-To download preloaded TPCH databases for duckdb:
-https://duckdb.org/docs/stable/core_extensions/tpch.html
-
-
-```bash
 
 ### Installation
 
@@ -64,7 +67,6 @@ https://duckdb.org/docs/stable/core_extensions/tpch.html
    ```bash
    poetry lock
    poetry install
-   
    ```
 
    Check poetry envirormnent for debugging in vs.code:
@@ -75,15 +77,14 @@ https://duckdb.org/docs/stable/core_extensions/tpch.html
    ```
 
 3. **Install System Dependencies:**
-   - Download and install [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server).
+   - Download and install [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server) if sql-server is used as data-source [both for SQL Azure and SQL Server].
 
 4. **Set Up Environment Variables:**
    Create a `.env` following the `.env.sample`
-   
 
 ## Project Structure
 
-```
+```bash
 ├── core/                    # Core business logic components
 ├── data/                    # Data management classes
 ├── services/                # Service layer for external integrations
@@ -94,9 +95,11 @@ https://duckdb.org/docs/stable/core_extensions/tpch.html
 ## Main Entry Point
 
 ### `llms_evaluator.py`
+
 Primary orchestrator class that coordinates all evaluation components.
 
 **Constructor Parameters:**
+
 - `questions_file_name` - Path to YAML file with evaluation questions
 - `db_schema_file_name` - Path to YAML file with database schema
 - `semantic_rules_file_name` - Path to Markdown file with semantic rules
@@ -104,12 +107,14 @@ Primary orchestrator class that coordinates all evaluation components.
 - `models_file_name` - Path to YAML file with model configurations
 
 **Key Methods:**
+
 - `evaluate_models(temperature, results_to_path, file_name_prefix, log_results, log_summary)` - Run full evaluation across all models
 - `execute_queries(sql_query_column, summary_file_name, results_to_path, ...)` - Generate baseline datasets
 - `load_baseline_datasets(baseline_path)` - Load reference datasets for comparison
 - `process_questions_with_model(model, model_config, temperature, max_tokens)` - Process questions with specific model
 
 **Attributes:**
+
 - `all_questions` - Loaded evaluation questions
 - `baseline_datasets` - Reference datasets for comparison
 - `models`, `models_configs` - Available models and their configurations
@@ -122,9 +127,11 @@ Primary orchestrator class that coordinates all evaluation components.
 ### Services
 
 #### `database_service.py`
+
 Handles database connections and SQL execution.
 
 **Methods:**
+
 - `get_dynamic_sql(source, sql_query, as_data_frame)` - Execute SQL queries on specified database
 - `execute_sql_query(sql_query)` - Execute SQL and return results with metadata
 - `get_connection(source)` - Get database connection engine
@@ -133,39 +140,49 @@ Handles database connections and SQL execution.
 **Supported Sources:** `sql-server`, `duckdb`
 
 #### `llm_service.py`
+
 Manages LLM interactions for SQL generation.
 
 **Methods:**
+
 - `generate_sql_query(platform, model, question_number, user_prompt, ...)` - Generate SQL from natural language
 
-**Supported Platforms:** `azure_openai`, `anthropic`, `deepseek`
+**Supported Platforms:** `azure_openai`, `anthropic`
 
 ### Core Executors
 
 #### `baseline_executor.py`
+
 Executes baseline SQL queries and generates reference datasets.
 
 **Methods:**
+
 - `execute_queries(questions, sql_query_column, summary_file_name, results_to_path, ...)` - Run baseline queries and export results
 
 #### `model_evaluator.py`
+
 Orchestrates evaluation of multiple LLM models.
 
 **Methods:**
+
 - `evaluate_models(models, models_configs, all_questions, baseline_datasets, ...)` - Evaluate multiple models against baseline
 
 #### `question_processor.py`
+
 Processes individual questions with LLM models and compares results.
 
 **Methods:**
+
 - `process_questions_with_model(questions, baseline_datasets, model, ...)` - Process questions with specific model and compare results
 
 ### Data Management
 
 #### `questions.py`
+
 Manages question datasets and YAML serialization.
 
 **Methods:**
+
 - `load_questions()` - Load questions from YAML file
 - `add_question(question)` - Add new question to dataset
 - `get_all_questions()` - Retrieve all questions
@@ -173,25 +190,31 @@ Manages question datasets and YAML serialization.
 - `find_question(keyword)` - Search questions by keyword
 
 **Attributes:**
+
 - `yaml_file` - Path to YAML file
 - `questions` - List of question dictionaries
 
 #### `questions_loader.py`
+
 Utility for loading questions from files.
 
 **Methods:**
+
 - `load_questions_from_file(questions_file_name)` - Static method to load questions
 
 #### `models_config.py`
+
 Handles model configuration loading from YAML.
 
 **Methods:**
+
 - `load_models_from_yaml()` - Load enabled models and configurations
 - `get_models_configs()` - Return loaded model configurations
 - `get_models()` - Return flat list of enabled models
 - `get_model_config_by_id(model_id)` - Get configuration by provider ID
 
 **Attributes:**
+
 - `yaml_path` - Path to models configuration YAML
 - `models_configs` - List of provider configurations
 - `models` - Flat list of enabled models
@@ -199,9 +222,11 @@ Handles model configuration loading from YAML.
 ### Schema Management
 
 #### `schema.py` (python_modules)
+
 Database schema management from YAML configuration.
 
 **Methods:**
+
 - `load_schema()` - Load database schema from YAML file
 - `get_table_names()` - Return list of all table names
 - `get_table_script(table_name)` - Return script for specific table
@@ -210,86 +235,73 @@ Database schema management from YAML configuration.
 - `save_schema()` - Save schema back to YAML file
 
 **Attributes:**
+
 - `yaml_file` - Path to schema YAML file
 - `tables` - List of table definitions
 
 ### Utilities
 
 #### `data_utils.py`
+
 Data comparison and baseline loading utilities.
 
 **Methods:**
+
 - `compare_dataframes(baseline_df, llm_df, question_number)` - Compare baseline vs LLM results
 - `load_baseline_datasets(baseline_path)` - Load baseline CSV files from directory
 
 **Returns:** Equality percentages for rows, columns, and coverage metrics
 
 #### `dataframe_utils.py`
+
 DataFrame normalization and alignment utilities.
 
 **Methods:**
+
 - `normalize_numeric_columns(df1, df2)` - Normalize numeric precision across DataFrames
 - `align_columns_by_first_row(df1, df2)` - Align column order based on first row values
 
 #### `file_utils.py`
+
 File operations utilities.
 
 **Methods:**
+
 - `load_file(filename)` - Load file content as string
 - `remove_baseline_datasets(results_to_path)` - Remove baseline CSV files
 
 #### `llm_utils.py`
+
 Low-level LLM API interactions.
 
 **Methods:**
+
 - `get_chat_completion_from_platform(platform, model, system_message, user_prompt, ...)` - Get chat completion from various platforms
 
 #### `sql_utils.py`
+
 SQL query processing utilities.
 
 **Methods:**
+
 - `remove_quotations(sql_query)` - Extract SQL from markdown code blocks
 
 #### `reporting_utils.py`
+
 Performance reporting and analysis.
 
 **Methods:**
+
 - `performance_report(results_path, file_name_prefix)` - Generate comprehensive performance reports
 - `_generate_model_performance_report(all_data)` - Model-specific performance metrics
 - `_generate_query_performance_report(all_data)` - Query-specific performance metrics
 - `_generate_ranking_reports(all_data)` - Ranking reports by different metrics
 - `_generate_combined_ranking(agg)` - Combined ranking by quality, time, and price
 
-### Templates
-
-#### `query_templates.py`
-Predefined SQL query templates for common operations.
-
-**Constants:**
-- `GET_ORDERS_BY_WEEK` - Weekly orders aggregation
-- `GET_CUSTOMERS_ORDERS` - Customer orders by week
-- `GET_PARTSUPP_ORDERS` - Part supplier orders by month
-- `GET_YEARS_WITH_ORDERS` - Years with order data
-- `GET_CUSTOMERS_WITH_ORDERS` - Customers with orders
-- `GET_TABLES_INFO_DATA` - Database table information
-- `GET_SCHEMA_OVERVIEW` - Database schema overview
-
-## Legacy Modules (python_modules)
-
-The `python_modules` directory contains legacy implementations being refactored:
-
-#### `module_data.py`
-Legacy database utility functions (use `database_utils.py` instead).
-
-#### `module_llm.py`
-Legacy LLM interaction functions (use `llm_utils.py` instead).
-
-#### `module_utils.py`
-Legacy utility functions (use specific utility modules instead).
-
 ## Usage Example
 
 ### `main_evaluation.py`
+
 Complete evaluation workflow example:
 
 ```python
@@ -338,72 +350,96 @@ performance_report(
 )
 ```
 
-## Usage Examples
-
-### Using SQL Server Database (Default)
-```bash
-python ./src/main_evaluation.py \
-    --questions_file_name ./docs/01-questions.yaml \
-    --database_source sql-server \
-    --get_baseline_from_data_source \
-    --iterations 1
-```
-
-### Using DuckDB with TPCH Data
-```bash
-# First, set up DuckDB with sample data
-python scripts/setup_duckdb.py
-
-# Then run evaluation
-python ./src/main_evaluation.py \
-    --questions_file_name ./docs/01-questions.yaml \
-    --database_source duckdb \
-    --get_baseline_from_data_source \
-    --iterations 1
-```
-
 ## Configuration Files
 
 ### Questions Format (`01-questions.yaml`)
+
 ```yaml
 questions:
   - question_number: 1
-    user_question: "Show me weekly sales for 2024"
-    sql_query: "SELECT DATEPART(week, order_date)..."
-    tables_used: ["orders", "customer"]
+    user_question: |
+      Which customers from the 'BUILDING' market segment placed more than 10 orders in 1996? Order by total order value descending.
+    sql_query: |
+      SELECT ...
+          c.c_custkey AS customer_id,
+          c.c_name    AS customer_name,
+          COUNT(o.o_orderkey) AS num_orders,
+          SUM(o.o_totalprice) AS total_amount
+      FROM customer c
+      JOIN orders o ON c.c_custkey = o.o_custkey
+      WHERE c.c_mktsegment = 'BUILDING'
+        AND YEAR(o.o_orderdate) = 1996
+      GROUP BY c.c_custkey, c.c_name
+      HAVING COUNT(o.o_orderkey) > 10
+      ORDER BY total_amount DESC;
+    tables_used:
+      - "customer"
+      - "orders"
+  - question_number: 2
+    user_question: |
+      xxxx
+    sql_query: |
+      xxxx
+    tables_used:
+      - xxxx
+      - yyyy
+  - question_number: n
 ```
 
 ### Database Schema (`02-database_schema.yaml`)
+
 ```yaml
 tables:
-  - name: "orders"
-    script: "CREATE TABLE orders (id INT, ...)"
-  - name: "customer" 
-    script: "CREATE TABLE customer (id INT, ...)"
+  - name: "region"
+    script: |
+      create table region (
+          r_regionkey integer not null,
+          r_name char(25) not null,
+          r_comment varchar(152),
+          primary key (r_regionkey)
+      );
+  - name: xxxx
+    script: |
+      xxxx
+  - name: yyyyy
+    script: |
+      xxxxxxx
+```
+
+### Semantic Rules (`03-semantic_rules.md`)
+
+```markdown
+# Semantic Rules for SQL Queries
+## Semantic Rules
+- Ensure all SQL queries are syntactically correct and executable.
+- Use appropriate JOINs to connect tables based on foreign key relationships.
+- Filter results using WHERE clauses to match user questions.
+```
+
+### System Message Template (`04-system_message.md`)
+
+```markdown
+# System Message Template for LLMs
+You are an expert SQL query generator. Given a user question, generate a valid SQL query that
+retrieves the requested data from the specified database schema. Ensure the query is optimized for performance and adheres to the semantic rules provided.
 ```
 
 ### Models Configuration (`05-models.yaml`)
+
 ```yaml
 models_configs:
   - id: "azure_openai"
-    enabled: true
+    enabled: true | false
     models:
       - name: "gpt-4o"
-        enabled: true
+        enabled: true | false
         cost_input_tokens_EUR_1K: 0.005
         cost_output_tokens_EUR_1K: 0.015
 ```
 
 ## Environment Variables
 
-### Database Configuration
-- `SQL_SERVER`, `SQL_SERVER_DATABASE`, `SQL_SERVER_USERNAME`, `SQL_SERVER_PASSWORD`
-
-### LLM API Configuration
-- `OPENAI_ENDPOINT`, `OPENAI_KEY`, `OPENAI_MODEL`
-- `DEEKSEEK_ENDPOINT`, `DEEKSEEK_KEY`, `DEEKSEEK_MODEL`
-- `ENDPOINT_{SUBSCRIPTION}`
-- `API_KEY_{SUBSCRIPTION}`
+See the `.env.sample` file for a complete list of environment variables.
 
 ## Evaluation Workflow
 
@@ -423,14 +459,7 @@ models_configs:
 
 ## Dependencies
 
-- `pandas` - Data manipulation and analysis
-- `sqlalchemy` - Database connections and ORM
-- `langfuse` - LLM observability and tracing
-- `anthropic` - Anthropic Claude API
-- `azure-ai-inference` - Azure AI services
-- `yaml` - Configuration file parsing
-- `tabulate` - Report formatting
-- `python-dotenv` - Environment variable management
+See the files: `requirements.txt` and `pyproject.toml`
 
 ## Output Files
 
@@ -438,3 +467,4 @@ models_configs:
 - **Results:** YAML files with detailed evaluation results per model
 - **Summary:** CSV files with aggregated metrics across all evaluations
 - **Reports:** Formatted performance and ranking reports
+  

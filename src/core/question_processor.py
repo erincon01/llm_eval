@@ -77,9 +77,21 @@ class QuestionProcessor:
                     table_scripts.append(table_script)
             database_tables_context = "\n".join(table_scripts)
 
+            # Get the platform for this specific model from the model_config
+            selected_model = next(
+                (
+                    m
+                    for m in model_config.get("models", [])
+                    if m.get("name") == model["name"]
+                ),
+                {},
+            )
+            # Default fallback
+            platform = selected_model.get("platform", "azure_openai")
+
             # Call the process_query function with the loaded question
             sql_query, metadata = self.llm_service.generate_sql_query(
-                platform="azure_openai",
+                platform=platform,
                 model=model,
                 question_number=question_number,
                 user_prompt=user_question,

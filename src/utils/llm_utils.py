@@ -1,5 +1,6 @@
 import os
 import time
+import requests
 import traceback
 
 # anthropic
@@ -29,7 +30,7 @@ def get_chat_completion_from_platform(
     Retrieves a chat completion from Azure OpenAI API.
     Args:
         platform (str): The platform to use for generating chat completions.
-            Either "azure_openai" or "anthropic".
+            Either "azure_openai", "anthropic", or "ollama".
         If the model starts with "claude-", it will use the Anthropic API.
         model (str): The model to use for generating chat completions.
         system_message (str): The system message.
@@ -84,6 +85,9 @@ def get_chat_completion_from_platform(
             api_version = "2024-05-01-preview"
 
         if model.startswith("Llama-"):
+            api_version = "2024-05-01-preview"
+
+        if model.startswith("gpt-oss"):
             api_version = "2024-05-01-preview"
 
         if "-4k-" in model and tokens > 4096:
@@ -223,5 +227,78 @@ def get_chat_completion_from_platform(
             tb = traceback.format_exc()
             return f"Error retrieving chat completion from Anthropic API: {str(e)}\n{tb}"
 
+    if platform == "ollama":
+        # Extract endpoint from model_config or environment variables
+        # Ollama typically doesn't need API key for local instances
+        endpoint = (
+            model_config.get("endpoint") or
+            os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
+        )
+
+        try:            
+            start = time.time()
+            
+            # Ollama API format
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": tokens
+                },
+                "stream": False
+            }
+            
+            response = requests.post(
+                f"{endpoint}/api/chat",
+                json=payload,
+                timeout=300  # 5 minutes timeout
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            output = result["message"]["content"]
+            duration = round(time.time() - start, 2)
+
+            # Ollama doesn't always provide detailed token counts
+            eval_count = result.get("eval_count", 0)
+            prompt_eval_count = result.get("prompt_eval_count", 0)
+            metadata_json = {
+                "total_tokens": eval_count + prompt_eval_count,
+                "prompt_tokens": prompt_eval_count,
+                "completion_tokens": eval_count,
+                "duration": duration,
+            }
+
+            if langfuse_enabled:
+                langfuse = get_client()
+                langfuse.update_current_trace(tags=["ollama_call", "qa"])
+                langfuse.update_current_span(
+                    metadata={
+                        "platform": platform,
+                        "model": model,
+                        "duration": duration,
+                        "total_tokens": metadata_json["total_tokens"],
+                        "prompt_tokens": metadata_json["prompt_tokens"],
+                        "completion_tokens": metadata_json[
+                            "completion_tokens"
+                        ],
+                    }
+                )
+
+            return output, metadata_json
+
+        except Exception as e:
+            tb = traceback.format_exc()
+            return (
+                f"Error retrieving chat completion from Ollama API: "
+                f"{str(e)}\n{tb}"
+            )
+
     if endpoint is None or api_key is None or model is None:
-        raise ValueError("Please set the relevant platform environment variables.")
+        raise ValueError(
+            "Please set the relevant platform environment variables."
+        )

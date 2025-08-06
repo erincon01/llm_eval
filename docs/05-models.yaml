@@ -1,37 +1,55 @@
 models_configs:
   - id: MSDN_CORP
-    enabled: false
+    enabled: true
     models:
       - name: DeepSeek-V3-0324
+        platform: azure_openai
+        enabled: false
         cost_input_tokens_EUR_1K:  0.00114
         cost_output_tokens_EUR_1K: 0.00456
       - name: gpt-4o
+        platform: azure_openai
+        enabled: false
         cost_input_tokens_EUR_1K:  0.00250
         cost_output_tokens_EUR_1K: 0.01000
       - name: gpt-4o-mini
+        platform: azure_openai
+        enabled: false
         cost_input_tokens_EUR_1K:  0.00015
         cost_output_tokens_EUR_1K: 0.00060
       - name: grok-3
+        platform: azure_openai
+        enabled: false
         cost_input_tokens_EUR_1K:  0.00300
         cost_output_tokens_EUR_1K: 0.01500
       - name: grok-3-mini
+        platform: azure_openai
+        enabled: false
         cost_input_tokens_EUR_1K:  0.00025
         cost_output_tokens_EUR_1K: 0.00127
+      - name: gpt-oss-120b
+        platform: azure_openai
+        enabled: true
+        cost_input_tokens_EUR_1K:  0.00028
+        cost_output_tokens_EUR_1K: 0.00233
 
   - id: MSDN_ALT
     enabled: false
     models:
       - name: Phi-3-medium-128k-instruct
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00015
         cost_output_tokens_EUR_1K: 0.00060
       - name: Phi-3.5-MoE-instruct
-        enabled: false
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00015
         cost_output_tokens_EUR_1K: 0.00057
       - name: gpt-4.1
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00200
         cost_output_tokens_EUR_1K: 0.00800
       - name: gpt-4.1-mini
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00040
         cost_output_tokens_EUR_1K: 0.00160
 
@@ -39,30 +57,72 @@ models_configs:
     enabled: false
     models:
       - name: Llama-3.3-70B-Instruct
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00600
         cost_output_tokens_EUR_1K: 0.00200
       - name: Llama-4-Maverick-17B-128E-Instruct-FP8
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00013
         cost_output_tokens_EUR_1K: 0.00050
       - name: Llama-4-Scout-17B-16E-Instruct
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00020
         cost_output_tokens_EUR_1K: 0.00078
       - name: Mistral-Large-2411
+        platform: azure_openai
         cost_input_tokens_EUR_1K:  0.00071
         cost_output_tokens_EUR_1K: 0.00071
 
   - id: ANTHROPIC_CUSTOM
-    enabled: true
+    enabled: false
     models:
       - name: claude-3-5-sonnet-20241022
+        platform: anthropic
         cost_input_tokens_EUR_1K:  0.00300
         cost_output_tokens_EUR_1K: 0.01500
       - name: claude-3-5-haiku-20241022
+        platform: anthropic
         cost_input_tokens_EUR_1K:  0.00080
         cost_output_tokens_EUR_1K: 0.00400
       - name: claude-3-7-sonnet-20250219
+        platform: anthropic
         cost_input_tokens_EUR_1K:  0.00300
         cost_output_tokens_EUR_1K: 0.01500
       - name: claude-sonnet-4-20250514
+        platform: anthropic
         cost_input_tokens_EUR_1K:  0.00300
         cost_output_tokens_EUR_1K: 0.01500
+
+  - id: OLLAMA_LOCAL
+    enabled: false
+    models:
+      - name: deepseek-coder:1.3b
+        platform: ollama
+        enabled: false
+        cost_input_tokens_EUR_1K: 0.00000  
+        cost_output_tokens_EUR_1K: 0.00000
+      - name: codellama:7b
+        platform: ollama
+        enabled: true
+        cost_input_tokens_EUR_1K: 0.00000  
+        cost_output_tokens_EUR_1K: 0.00000
+      - name: gpt-oss:20b
+        platform: ollama
+        enabled: false
+        cost_input_tokens_EUR_1K: 0.00000  
+        cost_output_tokens_EUR_1K: 0.00000
+      - name: qwen3-coder:30b  
+        platform: ollama
+        enabled: false
+        cost_input_tokens_EUR_1K: 0.00000
+        cost_output_tokens_EUR_1K: 0.00000
+      - name: deepseek-coder:33b  
+        platform: ollama
+        enabled: false
+        cost_input_tokens_EUR_1K: 0.00000
+        cost_output_tokens_EUR_1K: 0.00000
+      - name: codellama:13b-instruct  
+        platform: ollama
+        enabled: false
+        cost_input_tokens_EUR_1K: 0.00000
+        cost_output_tokens_EUR_1K: 0.00000

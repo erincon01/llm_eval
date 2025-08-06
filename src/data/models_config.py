@@ -87,16 +87,27 @@ class ModelsConfig:
                 if model.get("enabled", True):
                     if "name" not in model:
                         raise Exception(f"Model config missing 'name': {model}")
-                    # Add token costs to the model
-                    model["cost_input_tokens_EUR_1K"] = model.get("cost_input_tokens_EUR_1K", 0.0)
-                    model["cost_output_tokens_EUR_1K"] = model.get("cost_output_tokens_EUR_1K", 0.0)
+                    # Add token costs and platform to the model
+                    model["cost_input_tokens_EUR_1K"] = model.get(
+                        "cost_input_tokens_EUR_1K", 0.0
+                    )
+                    model["cost_output_tokens_EUR_1K"] = model.get(
+                        "cost_output_tokens_EUR_1K", 0.0
+                    )
+                    # Default to azure_openai for backward compatibility
+                    model["platform"] = model.get("platform", "azure_openai")
                     enabled_models.append(model)
                     models.append(
                         {
                             "id": provider["id"],
                             "name": model["name"],
-                            "cost_input_tokens_EUR_1K": model["cost_input_tokens_EUR_1K"],
-                            "cost_output_tokens_EUR_1K": model["cost_output_tokens_EUR_1K"],
+                            "platform": model["platform"],
+                            "cost_input_tokens_EUR_1K": model[
+                                "cost_input_tokens_EUR_1K"
+                            ],
+                            "cost_output_tokens_EUR_1K": model[
+                                "cost_output_tokens_EUR_1K"
+                            ],
                         }
                     )
 
@@ -156,7 +167,8 @@ class ModelsConfig:
 
     def validate_environment_variables(self) -> List[str]:
         """
-        Validate that all required environment variables are present for enabled configurations.
+        Validate that all required environment variables are present
+        for enabled configurations.
         
         Returns:
             List of missing environment variable names
@@ -172,7 +184,9 @@ class ModelsConfig:
         
         for provider in raw_configs:
             if provider.get("enabled", True) and "id" in provider:
-                endpoint, api_key = self._load_credentials_from_env(provider["id"])
+                endpoint, api_key = self._load_credentials_from_env(
+                    provider["id"]
+                )
                 env_id = provider["id"].replace('-', '_')
                 
                 if not endpoint:
